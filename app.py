@@ -9,7 +9,7 @@ VERSION = "8.0"
 
 TEHRAN = pytz.timezone("Asia/Tehran")
 
-# ==================== متغیرهای محیطی ====================
+# =============..======= متغیرهای محیطی ====================
 ALERTS_FILE = "alerts.json"
 FIRED_BACKUP_FILE = "fired_backup.json"  # لایه‌ی دفاعی دوم — جلوگیری از فایر مجدد بعد از ری‌استارت اگه Supabase قطع بود
 BOT_TOKEN_ENV = os.environ.get("BOT_TOKEN", "")
