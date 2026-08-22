@@ -1,0 +1,8 @@
+flask==3.0.3
+requests==2.32.3
+pytz==2024.1
+groq==1.0.0
+plotly==5.24.0
+pandas==2.2.2
+gunicorn==22.0.0
+openpyxl
