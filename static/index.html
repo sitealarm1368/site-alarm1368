@@ -1,1 +1,1519 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PriceAlert</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ========== تمام استایل‌های قبلی بدون تغییر ========== */
+:root {
+  --bg:#07090c;--bg2:#0c0f14;--bg3:#121720;--bg4:#181e29;
+  --border:rgba(255,255,255,.055);--border2:rgba(255,255,255,.10);--border3:rgba(255,255,255,.18);
+  --text:#dce4f0;--text2:#7a8799;--text3:#3d4a5c;
+  --green:#00d98b;--green2:#00f5a0;--gdim:rgba(0,217,139,.09);
+  --red:#ff4560;--rdim:rgba(255,69,96,.09);
+  --gold:#f0a500;--gdold:rgba(240,165,0,.09);
+  --blue:#4da8ff;--bluedim:rgba(77,168,255,.09);
+  --purple:#a070ff;--purdim:rgba(160,112,255,.09);
+  --mono:'IBM Plex Mono',monospace;--sans:'Vazirmatn',sans-serif;
+  --rad:12px;--rad2:16px;
+  --grid-line:rgba(255,255,255,.016);
+}
+body.light {
+  --bg:#f0f3f8;--bg2:#ffffff;--bg3:#e8ecf3;--bg4:#dde2ec;
+  --border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.12);--border3:rgba(0,0,0,.20);
+  --text:#1a2233;--text2:#4a5568;--text3:#9aa3b4;
+  --green:#00b87a;--green2:#00d98b;--gdim:rgba(0,184,122,.10);
+  --red:#e53050;--rdim:rgba(229,48,80,.09);
+  --gold:#c87a00;--gdold:rgba(200,122,0,.10);
+  --blue:#2276d4;--bluedim:rgba(34,118,212,.09);
+  --purple:#7040cc;--purdim:rgba(112,64,204,.09);
+  --grid-line:rgba(0,0,0,.03);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;transition:background .28s,color .28s}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2rem 1.25rem 5rem}
 
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:13px}
+.brand-logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,rgba(0,217,139,.15),rgba(77,168,255,.15));border:1px solid rgba(0,217,139,.2);display:flex;align-items:center;justify-content:center}
+.brand-name{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:-.03em}
+.brand-name em{color:var(--green);font-style:normal}
+.brand-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.journal-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(140,80,255,.5);background:linear-gradient(135deg,rgba(100,40,180,.55),rgba(60,20,120,.7));color:#e0c8ff;font-family:var(--sans);transition:.2s;text-decoration:none;letter-spacing:.3px;box-shadow:0 2px 10px rgba(100,40,200,.25)}
+.journal-btn:hover{background:linear-gradient(135deg,rgba(120,50,210,.7),rgba(80,30,160,.85));border-color:#a070ff;transform:translateY(-1px);box-shadow:0 5px 18px rgba(120,50,210,.45);color:#fff}
+.journal-btn svg{opacity:.85}
+.live-pill{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--text2)}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.theme-btn{width:36px;height:36px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.18s;line-height:1}
+.theme-btn:hover{border-color:var(--border2);transform:scale(1.08)}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:1rem 1.1rem .9rem}
+.scard-lbl{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
+.scard-val{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-.02em}
+.scard-val.green{color:var(--green)}.scard-val.gold{color:var(--gold)}.scard-val.purple{color:var(--purple)}
+.scard-sub{font-size:11px;color:var(--text2);margin-top:5px;font-family:var(--mono)}
+
+.user-card{background:linear-gradient(135deg,var(--bg3),var(--bg4));border:1px solid rgba(240,165,0,.3);border-radius:var(--rad2);padding:0.7rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all 0.2s ease}
+.user-card:hover{background:var(--purdim);border-color:var(--purple);transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.3)}
+.user-name-label{font-size:11px;font-family:var(--mono);color:var(--text3);margin-left:8px}
+.user-name-value{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--purple);letter-spacing:-0.3px}
+.user-edit-icon{font-size:14px;color:var(--purple);background:rgba(240,165,0,.15);padding:5px 10px;border-radius:30px;transition:0.2s}
+.user-card:hover .user-edit-icon{background:rgba(240,165,0,.3);transform:rotate(15deg)}
+
+.tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad);padding:4px;margin-bottom:1.25rem;width:fit-content;flex-wrap:wrap}
+.tab{padding:7px 16px;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border:none;background:transparent;font-family:var(--sans);transition:.18s}
+.tab.on{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.tab.on.t-alerts{color:var(--green);border-color:rgba(0,217,139,.3)}
+.tab.on.t-my{color:var(--purple);border-color:rgba(240,165,0,.3)}
+.tab.on.t-arch{color:var(--gold);border-color:rgba(240,165,0,.3)}
+.tab.on.t-sig{color:#00e5ff;border-color:rgba(0,229,255,.35)}
+.pnl{display:none}.pnl.on{display:block}
+
+.sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);margin-bottom:1rem;overflow:hidden}
+.sec-hd{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--border)}
+.sec-ttl{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;font-family:var(--mono);letter-spacing:.06em;color:var(--text2);text-transform:uppercase}
+.sec-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sec-dot.green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sec-dot.gold{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.sec-dot.purple{background:var(--purple)}
+.sec-dot.blue{background:var(--blue)}
+.sec-dot.red{background:var(--red)}
+.sec-bd{padding:1.2rem}
+
+.fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+.fld label{display:block;font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;letter-spacing:.05em}
+input,select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;transition:.15s;-webkit-appearance:none}
+input:focus,select:focus{border-color:var(--green);box-shadow:0 0 0 2px rgba(0,217,139,.1)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--bg3)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--sans);transition:.18s;white-space:nowrap}
+.btn:hover{color:var(--text);border-color:var(--border3)}
+.btn-sm{padding:5px 11px;font-size:11px;border-radius:7px}
+.btn-green{background:var(--gdim);color:var(--green);border-color:rgba(0,217,139,.25)}
+.btn-green:hover{background:rgba(0,217,139,.15);border-color:var(--green)}
+.btn-blue{background:var(--bluedim);color:var(--blue);border-color:rgba(77,168,255,.25)}
+.btn-blue:hover{background:rgba(77,168,255,.15)}
+.btn-red{background:var(--rdim);color:var(--red);border-color:rgba(255,69,96,.2)}
+.btn-red:hover{background:rgba(255,69,96,.15)}
+
+.upd-bar{display:flex;align-items:center;gap:10px;padding:8px 1.2rem;background:var(--bg4);border-bottom:1px solid var(--border);font-size:11px;font-family:var(--mono);color:var(--text3)}
+.upd-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:var(--green)}
+.upd-dot.err{background:var(--red)}
+
+.filter-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 1.2rem;background:var(--bg4);border-bottom:1px solid var(--border);flex-wrap:wrap}
+.search-box{display:flex;align-items:center;background:var(--bg3);border:1px solid var(--border2);border-radius:40px;padding:6px 12px;flex:2;min-width:160px}
+.search-box i{color:var(--text3);font-size:13px;margin-left:8px}
+.search-box input{background:transparent;border:none;padding:6px 0;font-size:12px;width:100%;outline:none;color:var(--text)}
+.search-box input::placeholder{color:var(--text3)}
+.sort-area{display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:30px;padding:3px 6px}
+.sort-area span{font-size:11px;color:var(--text3);margin-right:5px}
+.sort-area select{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:5px 10px;font-size:11px;color:var(--text);outline:none}
+.view-toggle{display:flex;gap:4px;background:var(--bg3);border-radius:30px;padding:3px}
+.view-btn{background:none;border:none;padding:5px 10px;border-radius:20px;font-size:13px;cursor:pointer;color:var(--text2);transition:0.2s}
+.view-btn.active{background:var(--purple);color:#fff;box-shadow:0 0 4px rgba(160,112,255,.5)}
+.view-btn:not(.active):hover{background:rgba(160,112,255,.2);color:var(--purple)}
+
+/* حالت کارتی (پیش‌فرض) */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;padding:1.2rem}
+.acard{background:var(--bg3);border:1px solid var(--border);border-radius:18px;padding:18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:cardIn .25s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.acard:hover{border-color:var(--border2);transform:translateY(-2px)}
+.acard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--card-accent,var(--green));opacity:.7}
+.acard.above{--card-accent:var(--green)}
+.acard.below{--card-accent:var(--red)}
+
+/* ── آلارم شخصی (me_alarm) — کاملاً متمایز ── */
+.acard.private-alert{
+  background:linear-gradient(145deg,rgba(240,165,0,.18),rgba(200,130,0,.10));
+  border:2px solid rgba(240,165,0,.7);
+  border-radius:18px;
+  box-shadow:0 0 0 1px rgba(240,165,0,.15), 0 8px 32px rgba(200,130,0,.2);
+  --card-accent:var(--purple);
+}
+.acard.private-alert::before{
+  height:4px;
+  background:linear-gradient(90deg,#f0a500,#c87a00,#f0a500);
+  background-size:200% 100%;
+  animation:privShimmer 3s linear infinite;
+  opacity:1;
+}
+@keyframes privShimmer{0%{background-position:0% 0}100%{background-position:200% 0}}
+.acard.private-alert:hover{
+  border-color:rgba(240,165,0,.95);
+  box-shadow:0 0 0 1px rgba(240,165,0,.3), 0 12px 40px rgba(200,130,0,.3);
+  transform:translateY(-3px);
+}
+.acard.private-alert::after{
+  content:'🔒';
+  position:absolute;top:14px;left:14px;
+  font-size:15px;
+  filter:drop-shadow(0 0 6px rgba(240,165,0,.9));
+}
+.private-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,rgba(240,165,0,.35),rgba(200,120,0,.2));
+  color:#ffe066;
+  border:1px solid rgba(240,165,0,.6);
+  border-radius:20px;padding:3px 11px;
+  font-size:10px;font-weight:700;font-family:var(--mono);
+  letter-spacing:.05em;
+  box-shadow:0 0 8px rgba(240,165,0,.25);
+}
+/* لیست */
+.alert-row.private-alert{
+  background:linear-gradient(90deg,rgba(240,165,0,.10),rgba(200,130,0,.06));
+  border:2px solid rgba(240,165,0,.55);
+  box-shadow:inset 3px 0 0 rgba(240,165,0,.9), 0 4px 16px rgba(200,130,0,.15);
+}
+.alert-row.private-alert .alert-row-main:hover{background:rgba(240,165,0,.1)}
+.alert-row.private-alert .row-symbol{color:#ffe066;font-weight:800;text-shadow:0 0 12px rgba(240,165,0,.6)}
+
+
+.acard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.acard-badge{display:flex;align-items:center;gap:12px}
+.abadge{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700}
+.abadge.c{background:var(--gdold);color:var(--gold);border:1px solid rgba(240,165,0,.2)}
+.abadge.f{background:var(--bluedim);color:var(--blue);border:1px solid rgba(77,168,255,.2)}
+.acard-name{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--text);letter-spacing:-0.3px}
+.acard-type{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px;letter-spacing:.05em}
+.creator-badge{display:inline-block;background:var(--purdim);color:var(--purple);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:500;margin-top:5px;font-family:var(--mono)}
+.acard-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:6px 8px;border-radius:8px;transition:.15s;display:inline-flex;align-items:center}
+.acard-del:hover{background:var(--rdim);color:var(--red)}
+.acard-prices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.pbox{background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.pbox-lbl{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.pbox-val{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:-0.5px;line-height:1}
+.pbox-val.live{color:var(--blue)}
+.pbox-val.target.above{color:var(--green)}
+.pbox-val.target.below{color:var(--red)}
+.pbox-val.loading{color:var(--text3);font-size:13px;font-weight:400;animation:fade 1.2s infinite}
+@keyframes fade{0%,100%{opacity:.3}50%{opacity:.9}}
+.acard-dist{margin-bottom:12px}
+.dist-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.dist-lbl{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.dist-chip{font-family:var(--mono);font-size:12px;font-weight:700;padding:3px 10px;border-radius:6px}
+.dist-chip.far{background:var(--gdim);color:var(--green)}
+.dist-chip.close{background:var(--rdim);color:var(--red)}
+.dist-chip.na{background:var(--bg4);color:var(--text3)}
+.dist-bar-bg{height:4px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.dist-bar{height:4px;border-radius:3px;transition:width .5s ease}
+.dist-bar.far{background:linear-gradient(90deg,var(--green),var(--green2))}
+.dist-bar.close{background:linear-gradient(90deg,var(--red),#ff7a90)}
+.acard-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:8px;border-top:1px solid var(--border)}
+.acard-created{font-size:10.5px;color:var(--text2);margin-top:6px;font-family:var(--mono);opacity:.85}
+.acard-comment{font-size:13px;font-weight:600;color:var(--text);background:var(--bg4);padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:6px;max-width:70%;word-break:break-word}
+.acard-dir{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);font-weight:700;padding:4px 12px;border-radius:30px}
+.acard-dir.up{background:var(--gdim);color:var(--green)}
+.acard-dir.dn{background:var(--rdim);color:var(--red)}
+/* دکمه‌های انتخاب جهت آلارم */
+.dir-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.dir-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 8px;border-radius:10px;border:2px solid var(--border);background:var(--bg4);color:var(--text3);cursor:pointer;font-size:13px;font-weight:700;font-family:inherit;transition:all .2s;line-height:1.3}
+.dir-btn .dir-sub{font-size:9px;font-weight:400;opacity:.7;font-family:var(--mono)}
+.dir-btn.dir-buy.active{border-color:var(--green);background:var(--gdim);color:var(--green)}
+.dir-btn.dir-sell.active{border-color:var(--red);background:var(--rdim);color:var(--red)}
+.dir-btn:not(.active):hover{border-color:var(--text3);background:var(--bg3)}
+
+/* حالت لیست فشرده */
+.list-mode .cards-grid{display:flex;flex-direction:column;gap:6px;padding:0.8rem}
+.alert-row{background:var(--bg3);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:all 0.2s}
+.alert-row-main{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;gap:8px;flex-wrap:wrap}
+.alert-row-main:hover{background:var(--bg4)}
+.row-left{display:flex;align-items:center;gap:8px;flex:2;min-width:140px}
+.row-symbol{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)}
+.row-creator{font-size:10px;color:var(--purple);background:var(--purdim);padding:2px 8px;border-radius:20px;display:inline-block;margin-right:6px}
+.row-target-price{font-family:var(--mono);font-size:12px;color:var(--green);font-weight:600;background:var(--gdim);padding:2px 8px;border-radius:20px}
+.row-del{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px 8px;border-radius:6px;font-size:14px}
+.row-del:hover{background:var(--rdim);color:var(--red)}
+.row-expand-icon{font-size:12px;color:var(--text3);margin-right:4px}
+.alert-details{display:none;padding:10px 12px;border-top:1px solid var(--border);background:var(--bg4);gap:8px;flex-wrap:wrap;font-size:12px}
+.alert-details.show{display:flex}
+.detail-item{display:flex;align-items:center;gap:6px;background:var(--bg3);padding:4px 10px;border-radius:20px}
+.detail-label{color:var(--text3)}
+.detail-value{color:var(--text);font-family:var(--mono);font-weight:500}
+
+.group-sep{display:flex;align-items:center;gap:10px;grid-column:1/-1;margin:16px 0 8px}
+.group-line{flex:1;height:1px;background:var(--border)}
+.group-label{font-size:12px;font-family:var(--mono);color:var(--text3);white-space:nowrap}
+.wdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-left:7px}
+.wdot.watch{background:var(--gold);box-shadow:0 0 6px rgba(240,165,0,.6);animation:blink 2s infinite}
+.wdot.pend{background:var(--text3)}
+.iv-badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:10px;font-family:var(--mono);font-weight:700;margin-right:6px;vertical-align:middle}
+.iv-badge.hot{background:rgba(0,217,139,.15);color:var(--green);border:1px solid rgba(0,217,139,.3)}
+.iv-badge.warm{background:rgba(240,165,0,.12);color:var(--gold);border:1px solid rgba(240,165,0,.25)}
+.iv-badge.cold{background:rgba(122,135,153,.1);color:var(--text2);border:1px solid var(--border)}
+.ago-lbl{font-size:10px;font-family:var(--mono);font-weight:600;padding:2px 6px;border-radius:4px;margin-right:4px;display:inline-block}
+.ago-lbl.hot{background:rgba(0,217,139,.1);color:var(--green)}
+.ago-lbl.warm{background:rgba(240,165,0,.1);color:var(--gold)}
+.ago-lbl.cold{background:rgba(122,135,153,.08);color:var(--text3)}
+
+.arch-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.arch-row:last-child{border-bottom:none}
+.arch-tag{font-size:10px;padding:2px 8px;border-radius:5px;background:var(--gdim);color:var(--green);font-family:var(--mono);font-weight:600;white-space:nowrap;margin-top:2px}
+.arch-name{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.arch-detail{font-size:11px;color:var(--text2);margin-top:3px;font-family:var(--mono)}
+.arch-cmt{font-size:11px;color:var(--text3);margin-top:2px;font-style:italic}
+.user-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.user-row:last-child{border-bottom:none}
+.user-av{width:34px;height:34px;border-radius:50%;background:var(--purdim);border:1px solid rgba(160,112,255,.2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:500;color:var(--text)}
+.user-id{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:1px}
+.user-date{font-size:11px;color:var(--text3);font-family:var(--mono);margin-right:auto}
+
+.err-log{background:var(--rdim);border:1px solid rgba(255,69,96,.15);border-radius:var(--rad);padding:10px 14px;margin:0 1.2rem 1rem;display:none}
+.err-log.show{display:block}
+.err-log-ttl{font-size:10px;font-family:var(--mono);color:var(--red);margin-bottom:6px;font-weight:700;letter-spacing:.06em}
+.err-item{font-size:11px;color:rgba(255,69,96,.8);font-family:var(--mono);padding:3px 0;border-bottom:1px solid rgba(255,69,96,.08)}
+.err-item:last-child{border-bottom:none}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3)}
+.empty-ico{font-size:28px;margin-bottom:10px;opacity:.4}
+
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:10px;font-size:13px;background:var(--bg4);border:1px solid var(--border3);color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;transition:opacity .25s;pointer-events:none;z-index:9999;font-family:var(--sans);white-space:nowrap}
+#toast.show{opacity:1}
+
+/* ===================== SIGNALS TAB ===================== */
+.sig-builder { position:relative; }
+.sig-reset-btn { font-size:11px; }
+
+.sig-form-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
+  gap:12px;
+  align-items:end;
+}
+.sig-field { display:flex; flex-direction:column; gap:6px; }
+.sig-field-full { grid-column: 1 / -1; }
+.sig-label {
+  font-size:11px; color:var(--text3); font-family:var(--mono);
+  letter-spacing:.05em; text-transform:uppercase;
+}
+
+.sig-dir-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sig-dir-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:10px 6px; border-radius:10px; border:2px solid var(--border);
+  background:var(--bg4); cursor:pointer; transition:all .2s; font-family:inherit;
+}
+.sig-dir-arrow { font-size:18px; font-weight:800; line-height:1; }
+.sig-dir-txt { font-size:10px; font-family:var(--mono); font-weight:700; letter-spacing:.06em; }
+.sig-buy.active { border-color:var(--green); background:var(--gdim); color:var(--green); }
+.sig-sell.active { border-color:var(--red); background:var(--rdim); color:var(--red); }
+.sig-dir-btn:not(.active) { color:var(--text3); }
+.sig-dir-btn:not(.active):hover { border-color:var(--text3); background:var(--bg3); }
+
+.sig-type-toggle { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sig-type-btn {
+  display:flex; align-items:center; justify-content:center;
+  padding:10px 6px; border-radius:10px; border:2px solid var(--border);
+  background:var(--bg4); cursor:pointer; transition:all .2s; font-family:inherit;
+  font-size:11px; font-family:var(--mono); font-weight:700; letter-spacing:.05em; color:var(--text3);
+}
+.sig-type-btn.active { border-color:var(--blue); background:var(--bluedim); color:var(--blue); }
+.sig-type-btn:not(.active):hover { border-color:var(--text3); background:var(--bg3); }
+
+/* پیش‌نمایش */
+.sig-preview-wrap {
+  margin: 1rem 0;
+  position:relative;
+}
+.sig-preview-label {
+  display:flex; align-items:center; gap:8px;
+  font-size:11px; font-family:var(--mono); color:#00e5ff;
+  letter-spacing:.08em; text-transform:uppercase;
+  margin-bottom:10px;
+}
+.sig-pulse {
+  width:8px; height:8px; border-radius:50%;
+  background:#00e5ff; box-shadow:0 0 10px #00e5ff;
+  animation:sigPulse 1.5s ease-in-out infinite;
+}
+@keyframes sigPulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.3);opacity:.6} }
+
+.sig-card {
+  position:relative; overflow:hidden;
+  background: linear-gradient(145deg, #0a1628, #0d1f38, #0a1628);
+  border: 1px solid rgba(0,229,255,.3);
+  border-radius:16px;
+  cursor:pointer;
+  box-shadow: 0 0 0 1px rgba(0,229,255,.08), 0 8px 32px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.sig-card:hover {
+  border-color:rgba(0,229,255,.6);
+  box-shadow:0 0 0 1px rgba(0,229,255,.15), 0 12px 40px rgba(0,229,255,.12), inset 0 1px 0 rgba(255,255,255,.06);
+  transform:translateY(-2px);
+}
+.sig-card::before {
+  content:''; position:absolute; inset:0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(0,229,255,.018) 28px, rgba(0,229,255,.018) 29px);
+  pointer-events:none;
+}
+.sig-card-inner { padding:1.4rem 1.6rem; position:relative; z-index:1; }
+
+.sig-empty-state { text-align:center; padding:2rem 1rem; color:var(--text3); }
+.sig-empty-ico { font-size:28px; margin-bottom:8px; opacity:.3; }
+
+/* محتوای سیگنال رندرشده */
+.scard-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:14px; padding-bottom:12px;
+  border-bottom:1px solid rgba(0,229,255,.12);
+}
+.scard-symbol {
+  font-family:var(--mono); font-size:24px; font-weight:800;
+  letter-spacing:-.02em; color:#fff;
+  text-shadow:0 0 20px rgba(0,229,255,.3);
+}
+.scard-dir-badge {
+  display:flex; align-items:center; gap:6px;
+  padding:6px 16px; border-radius:30px;
+  font-family:var(--mono); font-size:13px; font-weight:800;
+  letter-spacing:.05em;
+}
+.scard-dir-badge.buy { background:linear-gradient(135deg,rgba(0,217,139,.3),rgba(0,217,139,.15)); color:var(--green); border:1px solid rgba(0,217,139,.5); }
+.scard-dir-badge.sell { background:linear-gradient(135deg,rgba(255,69,96,.3),rgba(255,69,96,.15)); color:var(--red); border:1px solid rgba(255,69,96,.5); }
+
+.scard-prices { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
+.scard-price-box {
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06);
+  border-radius:10px; padding:10px 12px; text-align:center;
+}
+.scard-price-lbl { font-size:9px; font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:5px; }
+.scard-price-val { font-family:var(--mono); font-size:15px; font-weight:700; }
+.scard-price-val.entry { color:#00e5ff; }
+.scard-price-val.sl { color:var(--red); }
+.scard-price-val.tp { color:var(--green); }
+
+.scard-meta { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+.scard-badge-meta {
+  font-size:10px; font-family:var(--mono); font-weight:600;
+  padding:3px 10px; border-radius:20px;
+}
+.scard-risk-low { background:rgba(0,217,139,.15); color:var(--green); border:1px solid rgba(0,217,139,.3); }
+.scard-risk-med { background:rgba(240,165,0,.15); color:var(--gold); border:1px solid rgba(240,165,0,.3); }
+.scard-risk-high { background:rgba(255,69,96,.15); color:var(--red); border:1px solid rgba(255,69,96,.3); }
+.scard-tf-badge { background:rgba(0,229,255,.1); color:#00e5ff; border:1px solid rgba(0,229,255,.25); }
+
+.scard-note {
+  font-size:12px; color:var(--text2); font-style:italic;
+  padding:8px 12px; background:rgba(255,255,255,.03);
+  border-right:2px solid rgba(0,229,255,.3); border-radius:0 8px 8px 0;
+  margin-top:8px;
+}
+.scard-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:12px; margin-top:12px;
+  border-top:1px solid rgba(255,255,255,.05);
+  font-size:10px; font-family:var(--mono); color:var(--text3);
+}
+
+.sig-copy-overlay {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,229,255,.05);
+  opacity:0; transition:opacity .2s;
+  font-size:13px; color:#00e5ff; font-family:var(--mono);
+  pointer-events:none;
+  border-radius:16px;
+}
+.sig-card:hover .sig-copy-overlay { opacity:1; }
+.sig-copied-flash {
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,217,139,.12);
+  font-size:16px; font-weight:700; color:var(--green);
+  font-family:var(--mono); border-radius:16px;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.sig-copied-flash.show { opacity:1; }
+
+/* دکمه‌های عملیات */
+.sig-actions {
+  display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  margin:1rem 0;
+}
+@media(max-width:480px){ .sig-actions{grid-template-columns:1fr} }
+.sig-action-btn {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 20px; border-radius:12px; border:none;
+  font-size:13px; font-weight:600; font-family:var(--sans);
+  cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
+}
+.sig-action-btn::before {
+  content:''; position:absolute; inset:0; opacity:0; transition:opacity .2s;
+  background:linear-gradient(135deg,rgba(255,255,255,.08),transparent);
+}
+.sig-action-btn:hover::before { opacity:1; }
+.sig-btn-ico { font-size:16px; }
+.sig-send-btn {
+  background:linear-gradient(135deg,rgba(77,168,255,.3),rgba(40,100,200,.4));
+  color:var(--blue); border:1px solid rgba(77,168,255,.4);
+  box-shadow:0 4px 20px rgba(40,100,200,.2);
+}
+.sig-send-btn:hover { box-shadow:0 6px 28px rgba(40,100,200,.35); transform:translateY(-1px); }
+.sig-save-btn {
+  background:linear-gradient(135deg,rgba(0,229,255,.2),rgba(0,150,200,.3));
+  color:#00e5ff; border:1px solid rgba(0,229,255,.35);
+  box-shadow:0 4px 20px rgba(0,150,200,.18);
+}
+.sig-save-btn:hover { box-shadow:0 6px 28px rgba(0,200,230,.3); transform:translateY(-1px); }
+.sig-action-btn:disabled { opacity:.5; cursor:not-allowed; transform:none !important; }
+
+/* لیست سیگنال‌های ثبت‌شده */
+.sig-list-item {
+  display:flex; align-items:flex-start; gap:12px;
+  padding:13px 1.2rem; border-bottom:1px solid var(--border);
+  transition:background .15s;
+  position:relative;
+}
+.sig-list-item:last-child { border-bottom:none; }
+.sig-list-item:hover { background:var(--bg4); }
+.sig-list-badge {
+  flex-shrink:0; width:40px; height:40px; border-radius:9px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:1px; font-family:var(--mono); font-size:9px; font-weight:800;
+}
+.sig-list-badge.buy { background:var(--gdim); color:var(--green); border:1px solid rgba(0,217,139,.25); }
+.sig-list-badge.sell { background:var(--rdim); color:var(--red); border:1px solid rgba(255,69,96,.25); }
+.sig-list-info { flex:1; min-width:0; }
+.sig-list-sym { font-family:var(--mono); font-size:14px; font-weight:700; color:var(--text); }
+.sig-list-prices { font-family:var(--mono); font-size:11px; color:var(--text2); margin-top:3px; }
+.sig-list-prices .entry-price { color:#00e5ff; }
+.sig-list-prices .sl-price { color:var(--red); }
+.sig-list-prices .tp-price { color:var(--green); }
+.sig-list-meta { display:flex; gap:6px; flex-wrap:wrap; margin-top:5px; }
+.sig-list-time { font-size:10px; font-family:var(--mono); color:var(--text3); margin-right:auto; white-space:nowrap; }
+.sig-list-note { font-size:11px; color:var(--text3); margin-top:3px; font-style:italic; }
+.sig-list-del { background:none; border:none; color:var(--text3); cursor:pointer; padding:4px 8px; border-radius:6px; font-size:13px; transition:.15s; }
+.sig-list-del:hover { background:var(--rdim); color:var(--red); }
+/* ====================================================== */
+</style>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="brand">
+      <div class="brand-logo">🔔</div>
+      <div>
+        <div class="brand-name">Price<em>Alert</em></div>
+        <div class="brand-sub">CRYPTO · FOREX · GOLD</div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="live-pill"><span class="ldot"></span><span id="clk">--:--</span></div>
+      <a href="static/journal.html" class="journal-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        ژورنال
+      </a>
+      <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()">🌙</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="scard"><div class="scard-lbl">آلارم فعال</div><div class="scard-val green" id="sc-alerts">0</div><div class="scard-sub" id="sc-alerts-sub">—</div></div>
+    <div class="scard"><div class="scard-lbl">سیگنال</div><div class="scard-val" style="color:#00e5ff" id="sc-signals">0</div><div class="scard-sub">صادرشده</div></div>
+  </div>
+
+  <div class="user-card" id="user-card" onclick="changeUserName()">
+    <div><span class="user-name-label">شما</span> <span class="user-name-value" id="user-name-display">...</span></div>
+    <div class="user-edit-icon">✎</div>
+  </div>
+  <div style="cursor:pointer;font-size:11px;color:var(--text2);margin:-8px 0 1.2rem 0" onclick="setUserPin()">🔑 کد فعال‌سازی</div>
+
+  <div class="tabs">
+    <button class="tab on t-my" onclick="switchTab('alerts',this,'all')">⭐ آلارم‌های من</button>
+    <button class="tab t-sig" onclick="switchTab('signals',this,'')">📡 سیگنال</button>
+    <a class="tab" href="/report/weekly" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center">📊 آنالیز هفتگی</a>
+  </div>
+
+  <!-- ALERTS ALL PANEL -->
+  <div class="pnl on" id="pnl-alerts">
+    <div class="sec">
+      <div class="sec-hd"><div class="sec-ttl"><span class="sec-dot green"></span>آلارم جدید</div></div>
+      <div class="sec-bd">
+        <div class="fgrid">
+          <div class="fld"><label>نوع بازار</label><select id="mkt" onchange="onMktChange()"><option value="forex">💱 فارکس / طلا</option><option value="crypto">🪙 کریپتو</option></select></div>
+          <div class="fld"><label>نماد <span id="sym-hint" style="color:var(--blue);font-size:10px">(EURUSD, XAUUSD...)</span></label><input type="text" id="sym" placeholder="EURUSD" dir="ltr" oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="fld"><label>قیمت هدف (USD)</label><input type="number" id="tprice" placeholder="0.00000" step="any" dir="ltr"></div>
+          <div class="fld"><label>جهت آلارم</label>
+            <div class="dir-toggle" id="dir-toggle">
+              <button type="button" class="dir-btn dir-buy active" id="dir-buy" onclick="setDir('below')">
+                📈 ناحیه بای
+                <span class="dir-sub">پایین‌تر از هدف</span>
+              </button>
+              <button type="button" class="dir-btn dir-sell" id="dir-sell" onclick="setDir('above')">
+                📉 ناحیه سل
+                <span class="dir-sub">بالاتر از هدف</span>
+              </button>
+            </div>
+            <input type="hidden" id="adir" value="below">
+          </div>
+          <div class="fld"><label>یادداشت (اختیاری)</label><input type="text" id="acmt" placeholder="سطح کلیدی..."></div>
+          <div class="fld"><label>انقضا (روز — خالی = بدون انقضا)</label><input type="number" id="aexp" placeholder="مثلاً 3" min="1" step="1" dir="ltr"></div>
+          <div class="fld" id="private-fld" style="display:none">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="private-chk" style="width:16px;height:16px">
+              🔒 آلارم شخصی (فقط خودم ببینم)
+            </label>
+          </div>
+          <div class="fld" style="display:flex;align-items:flex-end;gap:8px">
+            <button class="btn btn-blue" style="flex:1" onclick="checkPrice()">👁 قیمت</button>
+            <button class="btn btn-green" style="flex:1" id="add-btn" onclick="addAlert()">+ افزودن</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-hd"><div class="sec-ttl"><span class="sec-dot green"></span>آلارم‌های من</div></div>
+      <div class="upd-bar"><span class="upd-dot" id="upd-dot"></span><span id="upd-txt">در انتظار اولین بررسی...</span><span style="margin-right:auto" id="upd-time"></span></div>
+      <div class="filter-bar">
+        <div class="search-box"><i>🔍</i><input type="text" id="search-input-all" placeholder="جستجو بر اساس نماد..." oninput="filterAlerts()"></div>
+        <div class="sort-area"><span>مرتب‌سازی:</span><select id="sort-select-all" onchange="filterAlerts()"><option value="distance">📏 نزدیک‌ترین هدف</option><option value="newest">🕒 جدیدترین ثبت</option></select></div>
+        <div class="view-toggle" id="view-toggle-all">
+          <button class="view-btn" data-view="card" onclick="setViewMode('all','card')">▤</button>
+          <button class="view-btn" data-view="list" onclick="setViewMode('all','list')">☰</button>
+        </div>
+      </div>
+      <div id="cards-container-all" class="cards-grid"></div>
+      <div class="err-log" id="err-log"><div class="err-log-ttl">⚠ خطاهای اخیر</div><div id="err-items"></div></div>
+    </div>
+  </div>
+
+  <!-- SIGNALS PANEL -->
+  <div class="pnl" id="pnl-signals">
+
+    <!-- فرم ساخت سیگنال -->
+    <div class="sec sig-builder">
+      <div class="sec-hd">
+        <div class="sec-ttl"><span class="sec-dot" style="background:#00e5ff;box-shadow:0 0 8px #00e5ff"></span>ساخت سیگنال جدید</div>
+        <button class="btn btn-sm sig-reset-btn" onclick="resetSignalForm()">↺ پاک کردن</button>
+      </div>
+      <div class="sec-bd">
+        <div class="sig-form-grid">
+          <!-- ردیف ۱ -->
+          <div class="sig-field">
+            <label class="sig-label">نوع بازار</label>
+            <select id="sig-mkt" onchange="onSigMktChange()">
+              <option value="forex">💱 فارکس / طلا</option>
+              <option value="crypto">🪙 کریپتو</option>
+            </select>
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">نماد <span id="sig-sym-hint" style="color:var(--blue);font-size:10px">(EURUSD, XAUUSD...)</span></label>
+            <input type="text" id="sig-sym" placeholder="EURUSD" dir="ltr" oninput="this.value=this.value.toUpperCase();buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">جهت</label>
+            <div class="sig-dir-toggle">
+              <button type="button" class="sig-dir-btn sig-buy active" id="sig-dir-buy" onclick="setSigDir('buy')">
+                <span class="sig-dir-arrow">↑</span>
+                <span class="sig-dir-txt">BUY</span>
+              </button>
+              <button type="button" class="sig-dir-btn sig-sell" id="sig-dir-sell" onclick="setSigDir('sell')">
+                <span class="sig-dir-arrow">↓</span>
+                <span class="sig-dir-txt">SELL</span>
+              </button>
+            </div>
+            <input type="hidden" id="sig-dir" value="buy">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">نوع سفارش <span style="font-size:10px;color:var(--text3)">(Pending)</span></label>
+            <div class="sig-type-toggle">
+              <button type="button" class="sig-type-btn active" id="sig-type-limit" onclick="setSigType('limit')">Limit</button>
+              <button type="button" class="sig-type-btn" id="sig-type-stop" onclick="setSigType('stop')">Stop</button>
+            </div>
+            <input type="hidden" id="sig-type" value="limit">
+          </div>
+          <!-- ردیف ۲ -->
+          <div class="sig-field">
+            <label class="sig-label">ورود <span style="font-size:10px;color:var(--text3)">(Entry)</span></label>
+            <input type="number" id="sig-entry" placeholder="0.00000" step="any" dir="ltr" oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">حد ضرر <span style="font-size:10px;color:var(--red)">(SL)</span></label>
+            <input type="number" id="sig-sl" placeholder="0.00000" step="any" dir="ltr" oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">هدف اول <span style="font-size:10px;color:var(--green)">(TP1)</span></label>
+            <input type="number" id="sig-tp1" placeholder="0.00000" step="any" dir="ltr" oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">هدف دوم <span style="font-size:10px;color:var(--green);opacity:.7">(TP2 — اختیاری)</span></label>
+            <input type="number" id="sig-tp2" placeholder="0.00000" step="any" dir="ltr" oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">هدف سوم <span style="font-size:10px;color:var(--green);opacity:.7">(TP3 — اختیاری)</span></label>
+            <input type="number" id="sig-tp3" placeholder="0.00000" step="any" dir="ltr" oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field sig-field-full">
+            <label class="sig-label">توضیحات <span style="font-size:10px;color:var(--text3)">(اختیاری)</span></label>
+            <input type="text" id="sig-note" placeholder="تحلیل، دلیل ورود..." oninput="buildSignalPreview()">
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">ریسک</label>
+            <select id="sig-risk" onchange="buildSignalPreview()">
+              <option value="LOW">🟢 کم</option>
+              <option value="MED" selected>🟡 متوسط</option>
+              <option value="HIGH">🔴 زیاد</option>
+            </select>
+          </div>
+          <div class="sig-field">
+            <label class="sig-label">تایم‌فریم</label>
+            <select id="sig-tf" onchange="buildSignalPreview()">
+              <option value="M5">M5</option>
+              <option value="M15">M15</option>
+              <option value="M30">M30</option>
+              <option value="H1" selected>H1</option>
+              <option value="H4">H4</option>
+              <option value="D1">D1</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- پیش‌نمایش لایو سیگنال -->
+    <div class="sig-preview-wrap" id="sig-preview-wrap">
+      <div class="sig-preview-label">
+        <span class="sig-pulse"></span>
+        پیش‌نمایش زنده سیگنال
+      </div>
+      <div class="sig-card" id="sig-live-card" onclick="copySignalText()">
+        <div class="sig-card-inner" id="sig-card-inner">
+          <div class="sig-empty-state">
+            <div class="sig-empty-ico">📡</div>
+            <p>نماد و قیمت ورود را وارد کنید</p>
+          </div>
+        </div>
+        <div class="sig-copy-overlay" id="sig-copy-overlay">
+          <span>📋 کلیک برای کپی</span>
+        </div>
+        <div class="sig-copied-flash" id="sig-copied-flash">✅ کپی شد!</div>
+      </div>
+    </div>
+
+    <!-- دکمه‌های عملیات -->
+    <div class="sig-actions">
+      <button class="sig-action-btn sig-send-btn" id="sig-send-btn" onclick="sendSignalToChannel()">
+        <span class="sig-btn-ico">📨</span>
+        ارسال به کانال تلگرام
+      </button>
+      <button class="sig-action-btn sig-save-btn" id="sig-save-btn" onclick="saveSignalToDB()">
+        <span class="sig-btn-ico">💾</span>
+        ثبت در سیستم
+      </button>
+    </div>
+
+    <!-- لیست سیگنال‌های صادر شده -->
+    <div class="sec" style="margin-top:1.5rem">
+      <div class="sec-hd">
+        <div class="sec-ttl"><span class="sec-dot" style="background:#00e5ff;box-shadow:0 0 6px #00e5ff"></span>سیگنال‌های صادرشده</div>
+        <button class="btn btn-sm" onclick="loadSignals()">🔄</button>
+      </div>
+      <div id="signals-list-body">
+        <div class="empty"><div class="empty-ico">📡</div><p>هنوز سیگنالی صادر نشده</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ── Telegram Mini App ──
+const isTWA = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData;
+if (isTWA) {
+  const twa = window.Telegram.WebApp;
+  twa.ready();
+  twa.expand();
+  if (twa.colorScheme === 'light') document.body.classList.add('light');
+}
+const API = '';
+// ========== Theme ==========
+function initTheme() { const t = localStorage.getItem('pa_theme') || 'dark'; applyTheme(t); }
+function applyTheme(t) { document.body.classList.toggle('light', t === 'light'); document.getElementById('theme-toggle').textContent = t === 'light' ? '☀️' : '🌙'; }
+function toggleTheme() { const isLight = document.body.classList.contains('light'); const next = isLight ? 'dark' : 'light'; localStorage.setItem('pa_theme', next); applyTheme(next); }
+initTheme();
+
+setInterval(() => {
+  document.getElementById('clk').textContent = new Date().toLocaleTimeString('fa-IR', {timeZone:'Asia/Tehran', hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}, 1000);
+
+let _tt;
+function toast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(_tt); _tt = setTimeout(() => el.classList.remove('show'), 2800); }
+
+// ========== User name (persistent) ==========
+function getUserName() {
+  let name = localStorage.getItem('trader_name');
+  if (!name || name.trim() === '') {
+    name = prompt('👤 لطفاً نام خود را وارد کنید (این نام در آلارم‌ها نمایش داده می‌شود):', '');
+    if (name && name.trim() !== '') localStorage.setItem('trader_name', name.trim());
+    else name = 'ناشناس';
+  }
+  return name;
+}
+function getUserPin() { return (localStorage.getItem('trader_pin') || '').trim(); }
+function setUserPin() {
+  const pin = prompt('🔑 کدی که از ادمین (ربات تلگرام) دریافت کردی رو وارد کن:', getUserPin());
+  if (pin !== null) {
+    localStorage.setItem('trader_pin', pin.trim());
+    toast('✅ کد ذخیره شد.');
+    checkUserAccess();
+  }
+}
+async function checkUserAccess() {
+  try {
+    const r = await fetch(`${API}/api/me?name=${encodeURIComponent(getUserName())}&pin=${encodeURIComponent(getUserPin())}`);
+    const d = await r.json();
+    document.getElementById('private-fld').style.display = (d.ok && d.private_access) ? 'flex' : 'none';
+  } catch { document.getElementById('private-fld').style.display = 'none'; }
+}
+function updateUserDisplay() { document.getElementById('user-name-display').textContent = getUserName(); }
+function changeUserName() {
+  const newName = prompt('نام جدید خود را وارد کنید:', getUserName());
+  if (newName && newName.trim() !== '') { 
+    localStorage.setItem('trader_name', newName.trim()); 
+    updateUserDisplay(); 
+    // پس از تغییر نام، حالت نمایش را از localStorage بر اساس نام جدید بارگیری کن
+    if (currentTab === 'alerts') loadViewMode('all');
+    else if (currentTab === 'myalerts') loadViewMode('my');
+    filterAlerts();
+    checkUserAccess();
+    toast('✅ نام شما تغییر کرد.');
+  }
+}
+updateUserDisplay();
+
+// ========== Global state ==========
+let allAlertsData = [];
+let allPrivateData = [];   // آلارم‌های شخصی (is_private) که از /api/alerts/my میان
+let currentTab = 'alerts';     // 'alerts', 'myalerts', 'archive', 'users'
+let currentSortAll = 'distance', currentSortMy = 'distance';
+let currentSearchAll = '', currentSearchMy = '';
+let viewModeAll = 'card', viewModeMy = 'card';
+
+// ========== View mode persistence per user ==========
+function setViewMode(panel, mode) {
+  const user = getUserName();
+  if (panel === 'all') {
+    viewModeAll = mode;
+    localStorage.setItem(`viewMode_all_${user}`, mode);
+    document.querySelectorAll('#view-toggle-all .view-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`#view-toggle-all .view-btn[data-view="${mode}"]`).classList.add('active');
+    if (currentTab === 'alerts') filterAlerts();
+  } else {
+    viewModeMy = mode;
+    localStorage.setItem(`viewMode_my_${user}`, mode);
+    document.querySelectorAll('#view-toggle-my .view-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`#view-toggle-my .view-btn[data-view="${mode}"]`).classList.add('active');
+    if (currentTab === 'myalerts') filterAlerts();
+  }
+}
+
+function loadViewMode(panel) {
+  const user = getUserName();
+  if (panel === 'all') {
+    const saved = localStorage.getItem(`viewMode_all_${user}`);
+    if (saved === 'card' || saved === 'list') viewModeAll = saved;
+    else viewModeAll = 'card';
+    document.querySelectorAll('#view-toggle-all .view-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`#view-toggle-all .view-btn[data-view="${viewModeAll}"]`).classList.add('active');
+  } else if (panel === 'my') {
+    const saved = localStorage.getItem(`viewMode_my_${user}`);
+    if (saved === 'card' || saved === 'list') viewModeMy = saved;
+    else viewModeMy = 'card';
+    document.querySelectorAll('#view-toggle-my .view-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`#view-toggle-my .view-btn[data-view="${viewModeMy}"]`).classList.add('active');
+  }
+}
+
+// ========== Tab switching ==========
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.pnl').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('pnl-' + id).classList.add('on');
+  currentTab = id === 'alerts' ? 'alerts' : (id === 'myalerts' ? 'myalerts' : id);
+  if (id === 'signals') { loadSignals(); buildSignalPreview(); }
+  if (id === 'alerts' || id === 'myalerts') { 
+    loadViewMode(id === 'alerts' ? 'all' : 'my');
+    filterAlerts(); 
+  }
+}
+
+// ========== Helpers ==========
+function onMktChange() {
+  const v = document.getElementById('mkt').value;
+  const h = document.getElementById('sym-hint');
+  const s = document.getElementById('sym');
+  if (v === 'crypto') { h.textContent = '(BTC, ETH, SOL...)'; s.placeholder = 'BTC'; }
+  else { h.textContent = '(EURUSD, XAUUSD...)'; s.placeholder = 'EURUSD'; }
+}
+
+function fmt(p, sym) {
+  if (p == null || isNaN(p)) return '—';
+  p = parseFloat(p);
+  const s = (sym || '').toUpperCase();
+  if (s.includes('XAU') || s.includes('XAG')) return p.toLocaleString('en', {minimumFractionDigits:2, maximumFractionDigits:2});
+  if (s.includes('JPY')) return p.toFixed(3);
+  const isForex = s.length === 6 && !['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TRX','TON','AVAX','LTC'].some(c => s.startsWith(c));
+  if (isForex) return p.toFixed(5);
+  if (p >= 10000) return p.toLocaleString('en', {maximumFractionDigits:1});
+  if (p >= 100) return p.toLocaleString('en', {maximumFractionDigits:2});
+  return p.toFixed(4);
+}
+
+function calcDist(cur, tgt, sym) {
+  if (!cur || !tgt) return { text: '—', pct: 0, cls: 'na' };
+  const s = (sym || '').toUpperCase();
+  const diff = Math.abs(cur - tgt);
+  let text, rawPct;
+  if (s.includes('XAU') || s.includes('XAG')) { text = diff.toFixed(2) + ' $'; rawPct = diff / tgt * 100; }
+  else if (s.includes('JPY')) { const pips = diff / 0.01; text = pips.toFixed(1) + ' pip'; rawPct = pips / 200 * 100; }
+  else if (s.length === 6 && !['BTC','ETH','BNB','SOL','XRP','ADA','DOGE','TRX','TON','AVAX','LTC'].some(c=>s.startsWith(c))) { const pips = diff / 0.0001; text = pips.toFixed(1) + ' pip'; rawPct = pips / 500 * 100; }
+  else { const pct = diff / tgt * 100; text = pct.toFixed(2) + '%'; rawPct = pct / 20 * 100; }
+  const barPct = Math.min(100, rawPct);
+  const cls = barPct > 35 ? 'far' : 'close';
+  return { text, barPct, cls };
+}
+
+async function checkPrice() {
+  const sym = document.getElementById('sym').value.trim().toUpperCase();
+  const mkt = document.getElementById('mkt').value;
+  if (!sym) { toast('نماد را وارد کنید'); return; }
+  toast('⏳ دریافت قیمت...');
+  try {
+    const r = await fetch(`${API}/api/price/${mkt}/${sym}`);
+    const d = await r.json();
+    if (d.price != null) { toast(`💰 ${sym}: $${fmt(parseFloat(d.price), sym)}`); document.getElementById('tprice').value = d.price; }
+    else toast(`❌ نماد پیدا نشد: ${sym}`);
+  } catch { toast('❌ خطا در ارتباط'); }
+}
+
+function setDir(val) {
+  document.getElementById('adir').value = val;
+  document.getElementById('dir-buy').classList.toggle('active', val === 'below');
+  document.getElementById('dir-sell').classList.toggle('active', val === 'above');
+}
+
+async function addAlert() {
+  const symbol = document.getElementById('sym').value.trim().toUpperCase();
+  const type = document.getElementById('mkt').value;
+  const target_price = parseFloat(document.getElementById('tprice').value);
+  const condition = document.getElementById('adir').value;
+  const comment = document.getElementById('acmt').value.trim();
+  const expire_days = document.getElementById('aexp').value.trim();
+  const creator = getUserName();
+  const pin = getUserPin();
+  const is_private = document.getElementById('private-chk').checked;
+  if (!symbol) { toast('نماد الزامی است'); return; }
+  if (!target_price || target_price <= 0) { toast('قیمت هدف را وارد کنید'); return; }
+  const btn = document.getElementById('add-btn');
+  btn.textContent = '⏳'; btn.disabled = true;
+  const r = await fetch(`${API}/api/alerts`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({symbol, type, target_price, condition, comment, creator, pin, is_private, expire_days})
+  });
+  const d = await r.json();
+  btn.textContent = '+ افزودن'; btn.disabled = false;
+  if (d.ok) {
+    toast(`✅ آلارم ${symbol}${is_private ? ' (شخصی)' : ''} توسط ${creator} ثبت شد`);
+    document.getElementById('sym').value = '';
+    document.getElementById('tprice').value = '';
+    document.getElementById('acmt').value = '';
+    document.getElementById('aexp').value = '';
+    document.getElementById('private-chk').checked = false;
+    await loadAlerts();
+  } else toast(`❌ ${d.error || 'خطا در ثبت آلارم'}`);
+}
+
+async function sendInstant() {
+  const symbol = document.getElementById('sym').value.trim().toUpperCase();
+  const type = document.getElementById('mkt').value;
+  const target_price = parseFloat(document.getElementById('tprice').value) || null;
+  const condition = document.getElementById('adir').value;
+  const comment = document.getElementById('acmt').value.trim();
+  const creator = getUserName();
+  const pin = getUserPin();
+  if (!symbol) { toast('نماد را وارد کنید'); return; }
+  const btn = document.getElementById('instant-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '⏳ در حال ارسال...'; btn.disabled = true;
+  try {
+    const r = await fetch(`${API}/api/instant-alert`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ symbol, type, target_price, condition, comment, creator, pin })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast(`⚡ آلارم فوری ${symbol} به ${d.sent} نفر ارسال شد`);
+      document.getElementById('sym').value = '';
+      document.getElementById('tprice').value = '';
+      document.getElementById('acmt').value = '';
+      await loadAlerts();
+    } else {
+      toast(`❌ خطا: ${d.error || 'ارسال ناموفق'}`);
+    }
+  } catch(e) {
+    toast('❌ خطا در ارتباط با سرور');
+  }
+  btn.innerHTML = orig; btn.disabled = false;
+}
+
+function getIntervalLabel(interval, sym) {
+  const isGold = sym && (sym.includes('XAU') || sym.includes('XAG'));
+  if (isGold) { if (!interval || interval <= 60) return { label: '۱ دقیقه', cls: 'hot' }; return { label: '۲ دقیقه', cls: 'warm' }; }
+  if (!interval || interval <= 60) return { label: '۱ دقیقه', cls: 'hot' };
+  return { label: '۲ دقیقه', cls: 'warm' };
+}
+
+function getPipDistance(a) {
+  const cur = a.last_price, tgt = a.target_price;
+  if (!cur || !tgt) return 999999;
+  const diff = Math.abs(cur - tgt);
+  const sym = (a.symbol || '').toUpperCase();
+  const isJPY = sym.includes('JPY');
+  const isGold = sym.includes('XAU') || sym.includes('XAG');
+  if (isGold) return diff * 10;
+  if (isJPY) return diff * 100;
+  if (a.type === 'crypto') return (diff / tgt) * 10000;
+  return diff * 10000;
+}
+
+function minutesAgo(ts) { if (!ts) return null; const serverDate = new Date(ts.replace(' ', 'T') + '+03:30'); const diff = (Date.now() - serverDate) / 60000; if (diff < 0) return 'همین الان'; if (diff < 1) return 'همین الان'; if (diff < 60) return Math.round(diff) + ' دقیقه پیش'; return Math.round(diff/60) + ' ساعت پیش'; }
+function formatCreatedAt(ts) {
+  if (!ts) return null;
+  const d = new Date(ts.replace(' ', 'T') + '+03:30');
+  if (isNaN(d.getTime())) return null;
+  const datePart = d.toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const timePart = d.toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' });
+  return `${datePart} - ${timePart}`;
+}
+
+// ========== Card rendering ==========
+function buildCard(a) {
+  const isCrypto = a.type === 'crypto';
+  const short = (a.symbol||'').slice(0,4);
+  const cur = a.last_price;
+  const tgt = a.target_price;
+  const isAbove = a.condition === 'above';
+  const isPrivate = !!a.is_private;
+  const di = calcDist(cur, tgt, a.symbol);
+  const iv = getIntervalLabel(a.check_interval, a.symbol);
+  const ago = minutesAgo(a.last_checked);
+  const cmtHtml = a.comment ? `<div class="acard-comment">📝 ${a.comment}</div>` : '';
+  const ivBadge = `<span class="iv-badge ${iv.cls}">${iv.label}</span>`;
+  const agoHtml = ago ? `<span class="ago-lbl ${iv.cls}">${ago}</span>` : '';
+  const staleHtml = a.price_stale ? `<div style="font-size:10px;color:var(--gold);margin-top:6px;padding:4px 10px;background:var(--gdold);border-radius:8px;">⏸ بازار تعطیل — آخرین قیمت ${a.price_stale.slice(11,16)}</div>` : '';
+  const createdHtml = formatCreatedAt(a.created_at) ? `<div class="acard-created">📅 ثبت: ${formatCreatedAt(a.created_at)}</div>` : '';
+  const creatorName = a.created_by || 'ناشناس';
+  const privateBadge = isPrivate ? `<div class="private-badge">🔒 آلارم شخصی</div>` : '';
+  const badgeStyle = isPrivate ? 'background:var(--purdim);color:var(--purple);border-color:rgba(240,165,0,.3)' : '';
+  const nameStyle = isPrivate ? 'color:var(--purple)' : '';
+  const liveColor = a.price_stale ? 'color:var(--gold)' : (isPrivate ? 'color:var(--purple)' : '');
+  const pboxLiveStyle = isPrivate ? 'border-color:rgba(160,112,255,.2);background:rgba(160,112,255,.05)' : '';
+  const liveHtml = cur != null ? `<div class="pbox-val live" id="pv-${a.id}" style="${liveColor}">$${fmt(cur,a.symbol)}</div>` : `<div class="pbox-val loading" id="pv-${a.id}">دریافت...</div>`;
+  const distHtml = cur != null ? `<div class="acard-dist" id="pd-${a.id}"><div class="dist-row"><span class="dist-lbl">فاصله تا هدف</span><span class="dist-chip ${di.cls}">${di.text}</span></div><div class="dist-bar-bg"><div class="dist-bar ${di.cls}" style="width:${di.barPct}%"></div></div></div>` : `<div id="pd-${a.id}"></div>`;
+  return `<div class="acard ${isAbove?'above':'below'} iv-${iv.cls}${isPrivate?' private-alert':''}" data-id="${a.id}">
+    <div class="acard-top">
+      <div class="acard-badge">
+        <div class="abadge ${isCrypto?'c':'f'}" style="${badgeStyle}">${short}</div>
+        <div>
+          <div class="acard-name" style="${nameStyle}">${a.symbol} <span class="wdot ${cur!=null?'watch':'pend'}"></span></div>
+          <div class="acard-type">${a.type.toUpperCase()} ${ivBadge}</div>
+          <div class="creator-badge"><i>👤</i> ${creatorName}</div>
+          ${privateBadge}
+        </div>
+      </div>
+      <button class="acard-del" onclick="deleteAlert('${a.id}')">✕</button>
+    </div>
+    <div class="acard-prices">
+      <div class="pbox" style="${pboxLiveStyle}"><div class="pbox-lbl">قیمت لحظه‌ای ${agoHtml}</div>${liveHtml}</div>
+      <div class="pbox"><div class="pbox-lbl">قیمت هدف</div><div class="pbox-val target ${isAbove?'above':'below'}">$${fmt(tgt,a.symbol)}</div></div>
+    </div>
+    ${distHtml}
+    <div class="acard-footer">
+      ${cmtHtml}
+      <span class="acard-dir ${isAbove?'dn':'up'}">${isAbove?'📉 ناحیه سل':'📈 ناحیه بای'}</span>
+    </div>
+    ${createdHtml}
+    ${staleHtml}
+  </div>`;
+}
+
+// ========== List row rendering (compact) ==========
+function buildListRow(a) {
+  const cur = a.last_price;
+  const tgt = a.target_price;
+  const isPrivate = !!a.is_private;
+  const di = calcDist(cur, tgt, a.symbol);
+  const iv = getIntervalLabel(a.check_interval, a.symbol);
+  const ago = minutesAgo(a.last_checked);
+  const creatorName = a.created_by || 'ناشناس';
+  const liveDisplay = cur != null ? fmt(cur, a.symbol) : '...';
+  const targetDisplay = fmt(tgt, a.symbol);
+  const distClass = di.cls === 'far' ? 'far' : (di.cls === 'close' ? 'close' : 'na');
+  const privateBadgeRow = isPrivate ? `<span style="font-size:9px;background:rgba(160,112,255,.2);color:var(--purple);border:1px solid rgba(240,165,0,.3);border-radius:10px;padding:1px 7px;font-family:var(--mono)">🔒 شخصی</span>` : '';
+  return `<div class="alert-row${isPrivate?' private-alert':''}" data-id="${a.id}">
+    <div class="alert-row-main" onclick="toggleRowDetails('${a.id}')">
+      <div class="row-left">
+        <div class="row-symbol">${a.symbol} <span class="wdot ${cur!=null?'watch':'pend'}"></span></div>
+        <span class="row-creator"><i>👤</i> ${creatorName}</span>
+        ${privateBadgeRow}
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="row-target-price">🎯 $${targetDisplay}</span>
+        <button class="row-del" onclick="event.stopPropagation();deleteAlert('${a.id}')">✕</button>
+        <span class="row-expand-icon">▼</span>
+      </div>
+    </div>
+    <div class="alert-details" id="details-${a.id}">
+      <span class="detail-item"><span class="detail-label">📊 فعلی:</span><span class="detail-value">$${liveDisplay}</span></span>
+      <span class="detail-item"><span class="detail-label">🎯 هدف:</span><span class="detail-value">$${targetDisplay}</span></span>
+      <span class="detail-item"><span class="detail-label">📏 فاصله:</span><span class="detail-value">${di.text}</span></span>
+      <span class="detail-item"><span class="detail-label">⏱️ آخرین بررسی:</span><span class="detail-value">${ago || '—'}</span></span>
+      <span class="detail-item"><span class="detail-label">🔄 بازه:</span><span class="detail-value">${iv.label}</span></span>
+      ${formatCreatedAt(a.created_at) ? `<span class="detail-item"><span class="detail-label">📅 ثبت:</span><span class="detail-value">${formatCreatedAt(a.created_at)}</span></span>` : ''}
+      ${a.comment ? `<span class="detail-item"><span class="detail-label">📝 یادداشت:</span><span class="detail-value">${a.comment}</span></span>` : ''}
+      ${a.price_stale ? `<span class="detail-item"><span class="detail-label">⚠️ وضعیت:</span><span class="detail-value">تعطیل (${a.price_stale.slice(11,16)})</span></span>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleRowDetails(id) {
+  const el = document.getElementById(`details-${id}`);
+  if (el) el.classList.toggle('show');
+}
+
+function sortAlerts(alerts, sortType) {
+  if (sortType === 'distance') return [...alerts].sort((a,b) => getPipDistance(a) - getPipDistance(b));
+  else if (sortType === 'newest') return [...alerts].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+  return alerts;
+}
+
+function filterAlerts() {
+  if (currentTab === 'alerts') {
+    currentSearchAll = document.getElementById('search-input-all').value.toLowerCase();
+    currentSortAll = document.getElementById('sort-select-all').value;
+    // آلارم‌های من = دقیقاً همون چیزی که سرور با تطابق اسم+کد برگردونده (allPrivateData)
+    // دیگه از لیست کامل همه‌ی کاربرا فیلتر نمی‌کنیم، چون اون فیلتر فقط سمت مرورگره و قابل دور زدنه
+    let filtered = allPrivateData.filter(a => a.active);
+    if (currentSearchAll) {
+      filtered = filtered.filter(a => 
+        a.symbol.toLowerCase().includes(currentSearchAll) || 
+        (a.created_by && a.created_by.toLowerCase().includes(currentSearchAll))
+      );
+    }
+    const sorted = sortAlerts(filtered, currentSortAll);
+    renderAlertsToContainer(sorted, 'cards-container-all', viewModeAll);
+  } else if (currentTab === 'myalerts') {
+    currentSearchMy = document.getElementById('search-input-my').value.toLowerCase();
+    currentSortMy = document.getElementById('sort-select-my').value;
+    const currentUser = getUserName();
+    // آلارم‌های من = آلارم‌های عادی کاربر + آلارم‌های شخصی (is_private) با همان نام
+    let filtered = allAlertsData.filter(a => a.active && a.created_by === currentUser);
+    // آلارم‌های شخصی از API جداگانه (allPrivateData) اضافه می‌شن اگه اسم match داشت
+    for (const pa of allPrivateData) {
+      if (pa.active && pa.created_by === currentUser && !filtered.find(x => x.id === pa.id)) {
+        filtered.push(pa);
+      }
+    }
+    if (currentSearchMy) {
+      filtered = filtered.filter(a => 
+        a.symbol.toLowerCase().includes(currentSearchMy) || 
+        (a.created_by && a.created_by.toLowerCase().includes(currentSearchMy))
+      );
+    }
+    const sorted = sortAlerts(filtered, currentSortMy);
+    renderAlertsToContainer(sorted, 'cards-container-my', viewModeMy);
+  }
+}
+
+function renderAlertsToContainer(alerts, containerId, viewMode) {
+  const container = document.getElementById(containerId);
+  if (!alerts.length) {
+    const emptyMsg = '<div class="empty"><div class="empty-ico">◎</div><p>شما هنوز آلارمی ثبت نکرده‌اید</p></div>';
+    container.innerHTML = emptyMsg;
+    return;
+  }
+  if (viewMode === 'list') {
+    container.classList.add('list-mode');
+    let html = '';
+    for (const a of alerts) html += buildListRow(a);
+    container.innerHTML = html;
+  } else {
+    container.classList.remove('list-mode');
+    const groups = {}, order = [];
+    for (const a of alerts) {
+      const pip = getPipDistance(a);
+      const isGold = a.symbol && (a.symbol.includes('XAU') || a.symbol.includes('XAG'));
+      let key, label;
+      if (isGold) { key = 'gold'; label = '⭐ طلا'; }
+      else if (pip < 5) { key = 'hot'; label = '🔴 فوری — زیر ۵ پیپ'; }
+      else if (pip < 30) { key = 'warm'; label = '🟡 خیلی نزدیک — ۵ تا ۳۰ پیپ'; }
+      else if (pip < 100) { key = 'med'; label = '🔵 نزدیک — ۳۰ تا ۱۰۰ پیپ'; }
+      else if (pip < 300) { key = 'far'; label = '⚫ متوسط — ۱۰۰ تا ۳۰۰ پیپ'; }
+      else { key = 'cold'; label = '⚪ دور — بالای ۳۰۰ پیپ'; }
+      if (!groups[key]) { groups[key] = {label, items: []}; order.push(key); }
+      groups[key].items.push(a);
+    }
+    let html = '';
+    for (const key of order) {
+      const g = groups[key];
+      html += `<div class="group-sep"><span class="group-line"></span><span class="group-label">${g.label}</span><span class="group-line"></span></div>`;
+      html += g.items.map(a => buildCard(a)).join('');
+    }
+    container.innerHTML = html;
+  }
+}
+
+async function deleteAlert(id) { if (!confirm('آلارم حذف شود؟')) return; await fetch(`${API}/api/alerts/${id}`, {method:'DELETE'}); toast('🗑 حذف شد'); loadAlerts(); }
+
+async function loadUsers() { try { const r = await fetch(`${API}/api/users`); const users = await r.json(); document.getElementById('sc-users').textContent = users.length; const body = document.getElementById('users-body'); if (!users.length) { body.innerHTML = '<div class="empty"><div class="empty-ico">👥</div><p>هنوز کاربری /start نزده</p></div>'; return; } body.innerHTML = users.map(u => `<div class="user-row"><div class="user-av">👤</div><div><div class="user-name">${u.username || 'کاربر'}</div><div class="user-id">ID: ${u.chat_id}</div></div><span class="user-date">${(u.joined_at||'').slice(0,10)}</span></div>`).join(''); } catch {} }
+
+let _forexOpen = true;
+async function loadAlerts() {
+  try {
+    const rs = await fetch(`${API}/api/status`);
+    const ds = await rs.json();
+    _forexOpen = ds.forex_open !== false;
+    const r = await fetch(`${API}/api/alerts`);
+    const alerts = await r.json();
+    allAlertsData = alerts;
+
+    // fetch آلارم‌های شخصی — فقط در allPrivateData نگه دار، به allAlertsData اضافه نشه
+    const userName = getUserName();
+    try {
+      const rMy = await fetch(`${API}/api/alerts/my?name=${encodeURIComponent(userName)}&pin=${encodeURIComponent(getUserPin())}`);
+      allPrivateData = await rMy.json();
+    } catch { allPrivateData = []; }
+
+    const active = alerts.filter(a => a.active && !a.is_private);
+    const myPrivateActive = allPrivateData.filter(a => a.active);
+    document.getElementById('sc-alerts').textContent = active.length;
+    const updDot = document.getElementById('upd-dot'), updTxt = document.getElementById('upd-txt'), updTime = document.getElementById('upd-time');
+    if (!_forexOpen) { updDot.className = 'upd-dot err'; updTxt.textContent = '⚠️ بازار فارکس تعطیل است (شنبه/یکشنبه) — کریپتو فعال'; }
+    else if (ds.last_update) { updDot.className = 'upd-dot'; updTxt.textContent = 'آخرین بررسی سرور'; updTime.textContent = minutesAgo(ds.last_update); }
+    else { updDot.className = 'upd-dot'; updTxt.textContent = 'در انتظار اولین بررسی...'; }
+    const errs = ds.errors || [], errLog = document.getElementById('err-log'), errItems = document.getElementById('err-items');
+    if (errs.length) { errLog.classList.add('show'); errItems.innerHTML = errs.slice(-3).reverse().map(e => `<div class="err-item">${e.time} — ${e.msg}</div>`).join(''); }
+    else { errLog.classList.remove('show'); }
+    filterAlerts();
+    document.getElementById('sc-alerts-sub').textContent = active.length ? `${active.filter(a=>a.last_price).length} با قیمت` : '—';
+  } catch(e) { console.error('loadAlerts:', e); }
+}
+
+
+// ===================== SIGNALS JS =====================
+let sigDir  = 'buy';    // 'buy' | 'sell'
+let sigType = 'limit';  // 'limit' | 'stop'
+let signalsData = [];
+
+// عیناً همون نگاشتی که ربات تو app.py برای متن سیگنال استفاده می‌کنه (dir_map)
+const SIG_DIR_MAP = {
+  buy_limit:  { label: '✅ Buy limit',  cls: 'buy'  },
+  buy_stop:   { label: '✅ Buy stop',   cls: 'buy'  },
+  sell_limit: { label: '🔴 Sell limit', cls: 'sell' },
+  sell_stop:  { label: '🔴 Sell stop',  cls: 'sell' },
+};
+
+function getSigDirection() { return `${sigDir}_${sigType}`; }
+
+function setSigDir(dir) {
+  sigDir = dir;
+  document.getElementById('sig-dir').value = dir;
+  document.getElementById('sig-dir-buy').classList.toggle('active', dir === 'buy');
+  document.getElementById('sig-dir-sell').classList.toggle('active', dir === 'sell');
+  buildSignalPreview();
+}
+
+function setSigType(type) {
+  sigType = type;
+  document.getElementById('sig-type').value = type;
+  document.getElementById('sig-type-limit').classList.toggle('active', type === 'limit');
+  document.getElementById('sig-type-stop').classList.toggle('active', type === 'stop');
+  buildSignalPreview();
+}
+
+function onSigMktChange() {
+  const v = document.getElementById('sig-mkt').value;
+  const h = document.getElementById('sig-sym-hint');
+  const s = document.getElementById('sig-sym');
+  if (v === 'crypto') { h.textContent = '(BTC, ETH, SOL...)'; s.placeholder = 'BTC'; }
+  else { h.textContent = '(EURUSD, XAUUSD...)'; s.placeholder = 'EURUSD'; }
+}
+
+function resetSignalForm() {
+  ['sig-sym','sig-entry','sig-sl','sig-tp1','sig-tp2','sig-tp3','sig-note'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('sig-mkt').value = 'forex';
+  document.getElementById('sig-risk').value = 'MED';
+  document.getElementById('sig-tf').value = 'H1';
+  setSigDir('buy');
+  setSigType('limit');
+  buildSignalPreview();
+  toast('فرم پاک شد');
+}
+
+// ساخت کارت پیش‌نمایش — دقیقاً با همون ترتیب فیلدهایی که _build_signal_text تو ربات می‌سازه:
+// #id / #symbol / جهت / Entry / SL / TP1 / TP2 / TP3 / Timeframe
+function buildSignalPreview() {
+  const sym    = (document.getElementById('sig-sym').value || '').trim().toUpperCase();
+  const entry  = parseFloat(document.getElementById('sig-entry').value);
+  const sl     = parseFloat(document.getElementById('sig-sl').value);
+  const tp1    = parseFloat(document.getElementById('sig-tp1').value);
+  const tp2    = parseFloat(document.getElementById('sig-tp2').value);
+  const tp3    = parseFloat(document.getElementById('sig-tp3').value);
+  const note   = document.getElementById('sig-note').value.trim();
+  const tf     = document.getElementById('sig-tf').value;
+  const inner  = document.getElementById('sig-card-inner');
+
+  if (!sym || !entry) {
+    inner.innerHTML = '<div class="sig-empty-state"><div class="sig-empty-ico">📡</div><p>نماد و قیمت ورود را وارد کنید</p></div>';
+    return;
+  }
+
+  const dInfo = SIG_DIR_MAP[getSigDirection()];
+  const noteHtml = note ? `<div class="scard-note">📝 ${note}</div>` : '';
+
+  inner.innerHTML = `
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px">#پیش‌نمایش</div>
+    <div class="scard-header">
+      <div class="scard-symbol">#${sym}</div>
+      <div class="scard-dir-badge ${dInfo.cls}">${dInfo.label}</div>
+    </div>
+    <div class="scard-prices" style="grid-template-columns:1fr 1fr">
+      <div class="scard-price-box">
+        <div class="scard-price-lbl">➡️ Entry</div>
+        <div class="scard-price-val entry">${fmt(entry, sym)}</div>
+      </div>
+      <div class="scard-price-box">
+        <div class="scard-price-lbl">🛑 SL</div>
+        <div class="scard-price-val sl">${sl ? fmt(sl, sym) : '—'}</div>
+      </div>
+    </div>
+    <div class="scard-prices" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="scard-price-box">
+        <div class="scard-price-lbl">🎯 TP1</div>
+        <div class="scard-price-val tp">${tp1 ? fmt(tp1, sym) : '—'}</div>
+      </div>
+      <div class="scard-price-box">
+        <div class="scard-price-lbl">🎯 TP2</div>
+        <div class="scard-price-val tp">${tp2 ? fmt(tp2, sym) : '—'}</div>
+      </div>
+      <div class="scard-price-box">
+        <div class="scard-price-lbl">🎯 TP3</div>
+        <div class="scard-price-val tp">${tp3 ? fmt(tp3, sym) : '—'}</div>
+      </div>
+    </div>
+    <div class="scard-meta">
+      <span class="scard-badge-meta scard-tf-badge">⏱ Timeframe: ${tf}</span>
+    </div>
+    ${noteHtml}
+  `;
+}
+
+// متن خام برای کپی — عیناً ساختار _build_signal_text پایتون (بدون تگ‌های HTML تلگرام)
+function buildSignalText() {
+  const sym   = (document.getElementById('sig-sym').value || '').trim().toUpperCase();
+  const entry = parseFloat(document.getElementById('sig-entry').value);
+  const sl    = parseFloat(document.getElementById('sig-sl').value);
+  const tp1   = parseFloat(document.getElementById('sig-tp1').value);
+  const tp2   = parseFloat(document.getElementById('sig-tp2').value);
+  const tp3   = parseFloat(document.getElementById('sig-tp3').value);
+  const note  = document.getElementById('sig-note').value.trim();
+  const tf    = document.getElementById('sig-tf').value;
+  const dInfo = SIG_DIR_MAP[getSigDirection()];
+  const c = (v) => v ? fmt(v, sym) : '-';
+
+  let txt = `#پیش‌نمایش\n`;
+  txt += `#${sym}\n`;
+  txt += `${dInfo.label}\n`;
+  txt += `➡️ Entry: ${c(entry)}\n`;
+  txt += `🛑 SL: ${c(sl)}\n`;
+  txt += `🎯 TP:\n`;
+  txt += `TP1: ${c(tp1)}\n`;
+  txt += `TP2: ${c(tp2)}\n`;
+  txt += `TP3: ${c(tp3)}\n`;
+  txt += `⏱ Timeframe: ${tf}`;
+  if (note) txt += `\n\n📝 ${note}`;
+  return txt;
+}
+
+function copySignalText() {
+  const sym = (document.getElementById('sig-sym').value || '').trim();
+  if (!sym) { toast('ابتدا سیگنال را کامل کنید'); return; }
+  const txt = buildSignalText();
+  navigator.clipboard.writeText(txt).then(() => {
+    const flash = document.getElementById('sig-copied-flash');
+    flash.classList.add('show');
+    setTimeout(() => flash.classList.remove('show'), 1500);
+    toast('📋 سیگنال کپی شد!');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('📋 کپی شد');
+  });
+}
+
+// پیلود ارسالی به سرور — دقیقاً فیلدهایی که _build_signal_record تو app.py انتظار داره
+function buildSignalPayload() {
+  return {
+    symbol:    (document.getElementById('sig-sym').value || '').trim().toUpperCase(),
+    direction: getSigDirection(),
+    entry:     parseFloat(document.getElementById('sig-entry').value),
+    sl:        parseFloat(document.getElementById('sig-sl').value)  || null,
+    tp1:       parseFloat(document.getElementById('sig-tp1').value) || null,
+    tp2:       parseFloat(document.getElementById('sig-tp2').value) || null,
+    tp3:       parseFloat(document.getElementById('sig-tp3').value) || null,
+    tf:        document.getElementById('sig-tf').value,
+    note:      document.getElementById('sig-note').value.trim(),
+    creator:   getUserName()
+  };
+}
+
+async function sendSignalToChannel() {
+  const sym = (document.getElementById('sig-sym').value||'').trim().toUpperCase();
+  if (!sym) { toast('نماد را وارد کنید'); return; }
+  const entry = parseFloat(document.getElementById('sig-entry').value);
+  if (!entry) { toast('قیمت ورود الزامی است'); return; }
+
+  const btn = document.getElementById('sig-send-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="sig-btn-ico">⏳</span> در حال ارسال...';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`${API}/api/send-signal`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(buildSignalPayload())
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast(d.sent ? `✅ سیگنال ${d.signal.id} به کانال ارسال شد` : `⚠️ ${d.warning || 'فقط ذخیره شد'}`);
+      loadSignals();
+    } else toast(`❌ خطا: ${d.error || 'ارسال ناموفق'}`);
+  } catch { toast('❌ خطا در ارتباط با سرور'); }
+  btn.innerHTML = orig; btn.disabled = false;
+}
+
+async function saveSignalToDB() {
+  const sym = (document.getElementById('sig-sym').value||'').trim().toUpperCase();
+  if (!sym) { toast('نماد را وارد کنید'); return; }
+  const entry = parseFloat(document.getElementById('sig-entry').value);
+  if (!entry) { toast('قیمت ورود الزامی است'); return; }
+
+  const btn = document.getElementById('sig-save-btn');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<span class="sig-btn-ico">⏳</span> در حال ثبت...';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`${API}/api/signals`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(buildSignalPayload())
+    });
+    const d = await r.json();
+    if (d.ok) {
+      toast(`💾 سیگنال ${d.signal.id} ثبت شد`);
+      loadSignals();
+    } else toast(`❌ ${d.error || 'خطا در ثبت'}`);
+  } catch { toast('❌ خطا در ارتباط با سرور'); }
+  btn.innerHTML = orig; btn.disabled = false;
+}
+
+async function loadSignals() {
+  try {
+    const r = await fetch(`${API}/api/signals`);
+    const items = await r.json();
+    signalsData = items;
+    renderSignalsList(items);
+  } catch {
+    document.getElementById('signals-list-body').innerHTML =
+      '<div class="empty"><div class="empty-ico">⚠️</div><p>خطا در بارگذاری سیگنال‌ها</p></div>';
+  }
+}
+
+function renderSignalsList(items) {
+  const scEl = document.getElementById('sc-signals');
+  if (scEl) scEl.textContent = items ? items.length : 0;
+  const body = document.getElementById('signals-list-body');
+  if (!items || !items.length) {
+    body.innerHTML = '<div class="empty"><div class="empty-ico">📡</div><p>هنوز سیگنالی صادر نشده</p></div>';
+    return;
+  }
+  body.innerHTML = items.slice().reverse().map(s => {
+    const dInfo = SIG_DIR_MAP[s.direction] || { label: s.direction || '—', cls: 'buy' };
+    const isBuy = dInfo.cls === 'buy';
+    const dirShort = isBuy ? '▲ BUY' : '▼ SELL';
+    const ts = s.sent_at ? new Date(String(s.sent_at).replace(' ','T')).toLocaleString('fa-IR',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',month:'short',day:'numeric'}) : '';
+    const tp2 = s.tp2 ? ` | TP2: <span class="tp-price">${fmt(s.tp2,s.symbol)}</span>` : '';
+    const tp3 = s.tp3 ? ` | TP3: <span class="tp-price">${fmt(s.tp3,s.symbol)}</span>` : '';
+    const noteHtml = s.note ? `<div class="sig-list-note">📝 ${s.note}</div>` : '';
+    return `<div class="sig-list-item">
+      <div class="sig-list-badge ${isBuy?'buy':'sell'}">${dirShort}</div>
+      <div class="sig-list-info">
+        <div class="sig-list-sym">#${s.id||''} &nbsp;${s.symbol} <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">${s.tf||''}</span></div>
+        <div class="sig-list-prices">
+          ${dInfo.label} &nbsp;|&nbsp; Entry: <span class="entry-price">${fmt(s.entry,s.symbol)}</span>
+          &nbsp;|&nbsp; SL: <span class="sl-price">${s.sl?fmt(s.sl,s.symbol):'—'}</span>
+          &nbsp;|&nbsp; TP1: <span class="tp-price">${s.tp1?fmt(s.tp1,s.symbol):'—'}</span>${tp2}${tp3}
+        </div>
+        <div class="sig-list-meta">
+          <span style="font-size:10px;font-family:var(--mono);color:var(--text3)">👤 ${s.sent_by||'—'}</span>
+        </div>
+        ${noteHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <span class="sig-list-time">${ts}</span>
+        <button class="sig-list-del" onclick="deleteSignal('${s.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteSignal(id) {
+  if (!confirm('این سیگنال حذف شود؟')) return;
+  try {
+    await fetch(`${API}/api/signals/${id}`, {method:'DELETE'});
+    toast('🗑 حذف شد');
+    loadSignals();
+  } catch { toast('❌ خطا در حذف'); }
+}
+
+// ======================================================
+
+// ========== Initialization ==========
+loadAlerts();
+checkUserAccess();
+setInterval(loadAlerts, 60000);
+// پس از بارگذاری صفحه، حالت نمایش را برای تب فعال (همه آلارم‌ها) بارگیری کن
+// ابتدا باید نام کاربر مشخص باشد (updateUserDisplay قبلاً فراخوانی شده)
+loadViewMode('all');
+loadViewMode('my');
+</script>
+
+<div id="ver-bar" style="position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:5px 16px;display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);z-index:100">
+  <span>PriceAlert <span id="ver-num" style="color:var(--green)">v2.6</span></span>
+  <span id="ver-time" style="color:var(--text3)"></span>
+</div>
+<script>setInterval(()=>{document.getElementById('ver-time').textContent=new Date().toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit'})+' تهران';},1000);</script>
+</body>
+</html>

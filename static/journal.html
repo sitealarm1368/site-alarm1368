@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ژورنال معاملات — PriceAlert</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        /* استایل‌ها کاملاً مشابه نسخه قبلی – فقط یک خط برای نمایش برگشت اضافه شد */
+        :root{
+            --bg:#07090c;--bg2:#0c0f14;--bg3:#121720;--bg4:#181e29;
+            --border:rgba(255,255,255,.055);--border2:rgba(255,255,255,.10);--border3:rgba(255,255,255,.18);
+            --text:#dce4f0;--text2:#7a8799;--text3:#3d4a5c;
+            --green:#00d98b;--gdim:rgba(0,217,139,.09);
+            --red:#ff4560;--rdim:rgba(255,69,96,.09);
+            --gold:#f0a500;--gdold:rgba(240,165,0,.09);
+            --blue:#4da8ff;--bluedim:rgba(77,168,255,.09);
+            --purple:#a070ff;--purdim:rgba(160,112,255,.09);
+            --mono:'IBM Plex Mono',monospace;--sans:'Vazirmatn',sans-serif;
+            --rad2:16px;--grid-line:rgba(255,255,255,.016);
+        }
+        body.light{
+            --bg:#f0f3f8;--bg2:#ffffff;--bg3:#e8ecf3;--bg4:#dde2ec;
+            --border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.12);--border3:rgba(0,0,0,.20);
+            --text:#1a2233;--text2:#4a5568;--text3:#9aa3b4;
+            --green:#00b87a;--gdim:rgba(0,184,122,.10);
+            --red:#e53050;--rdim:rgba(229,48,80,.09);
+            --gold:#c87a00;--gdold:rgba(200,122,0,.10);
+            --blue:#2276d4;--bluedim:rgba(34,118,212,.09);
+            --purple:#7040cc;--purdim:rgba(112,64,204,.09);
+            --grid-line:rgba(0,0,0,.03);
+        }
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;transition:background .28s,color .28s}
+        body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+        .wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:2rem 1.25rem 5rem}
+        .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+        .brand{display:flex;align-items:center;gap:13px;text-decoration:none;color:inherit}
+        .brand-logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,rgba(160,112,255,.18),rgba(77,168,255,.12));border:1px solid rgba(160,112,255,.25);display:flex;align-items:center;justify-content:center;font-size:20px}
+        .brand-name{font-family:var(--mono);font-size:18px;font-weight:600;letter-spacing:-.03em}
+        .brand-name em{color:var(--purple);font-style:normal}
+        .brand-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
+        .hdr-right{display:flex;align-items:center;gap:8px}
+        .back-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;font-size:12px;font-family:var(--mono);color:var(--text2);text-decoration:none;transition:.18s}
+        .back-btn:hover{color:var(--text);border-color:var(--border2)}
+        .theme-btn{width:36px;height:36px;border-radius:9px;background:var(--bg3);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:.18s}
+        .theme-btn:hover{border-color:var(--border2);transform:scale(1.08)}
+        .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+        @media(max-width:700px){.stats{grid-template-columns:1fr 1fr}}
+        .scard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:1rem 1.1rem .85rem;position:relative;overflow:hidden}
+        .scard::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sa,var(--purple));opacity:.55}
+        .scard-lbl{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:7px}
+        .scard-val{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-.02em}
+        .scard-val.g{color:var(--green)}.scard-val.r{color:var(--red)}.scard-val.bl{color:var(--blue)}.scard-val.pu{color:var(--purple)}.scard-val.gold{color:var(--gold)}
+        .scard-sub{font-size:11px;color:var(--text2);margin-top:5px;font-family:var(--mono)}
+        .main-grid{
+            display: grid;
+            grid-template-columns: 1fr 370px;
+            gap: 1rem;
+            align-items: start;
+        }
+        .form-col { order: 2; }
+        .list-col { order: 1; }
+        @media (max-width: 900px) {
+            .main-grid {
+                display: flex;
+                flex-direction: column;
+            }
+            .form-col { order: -1 !important; }
+            .list-col { order: 0; }
+        }
+        .sec{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);margin-bottom:1rem;overflow:hidden}
+        .sec-hd{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.2rem;border-bottom:1px solid var(--border)}
+        .sec-ttl{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;font-family:var(--mono);letter-spacing:.07em;color:var(--text2);text-transform:uppercase}
+        .sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .sdot.g{background:var(--green);box-shadow:0 0 6px var(--green)}
+        .sdot.r{background:var(--red)}.sdot.pu{background:var(--purple);box-shadow:0 0 5px var(--purple)}
+        .sdot.bl{background:var(--blue)}.sdot.gold{background:var(--gold)}
+        .sec-bd{padding:1.15rem}
+        .fld{margin-bottom:11px}
+        .fld label{display:block;font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;letter-spacing:.05em;text-transform:uppercase}
+        input,select,textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;font-family:var(--sans);outline:none;transition:.15s;-webkit-appearance:none}
+        input:focus,select:focus,textarea:focus{border-color:var(--purple);box-shadow:0 0 0 2px rgba(160,112,255,.12)}
+        input::placeholder,textarea::placeholder{color:var(--text3)}
+        select option{background:var(--bg3)}
+        textarea{resize:vertical;min-height:65px;line-height:1.6}
+        .frow{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 15px;border-radius:9px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);font-family:var(--sans);transition:.18s;white-space:nowrap}
+        .btn:hover{color:var(--text);border-color:var(--border3)}
+        .btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+        .btn-sm{padding:5px 10px;font-size:11px;border-radius:7px}
+        .btn-g{background:var(--gdim);color:var(--green);border-color:rgba(0,217,139,.25)}
+        .btn-g:hover{background:rgba(0,217,139,.15);border-color:var(--green)}
+        .btn-r{background:var(--rdim);color:var(--red);border-color:rgba(255,69,96,.2)}
+        .btn-r:hover{background:rgba(255,69,96,.15)}
+        .btn-pu{background:var(--purdim);color:var(--purple);border-color:rgba(160,112,255,.25)}
+        .btn-pu:hover{background:rgba(160,112,255,.15);border-color:var(--purple)}
+        .btn-bl{background:var(--bluedim);color:var(--blue);border-color:rgba(77,168,255,.25)}
+        .btn-bl:hover{background:rgba(77,168,255,.15)}
+        .btn-full{width:100%}
+        .dir-toggle{display:flex;border-radius:9px;overflow:hidden;border:1px solid var(--border2)}
+        .dir-btn{flex:1;padding:9px;border:none;cursor:pointer;font-size:13px;font-family:var(--sans);font-weight:600;transition:.18s;background:var(--bg3);color:var(--text3)}
+        .dir-btn.buy.on{background:var(--gdim);color:var(--green)}
+        .dir-btn.sell.on{background:var(--rdim);color:var(--red)}
+        .tabs{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1rem;width:fit-content}
+        .tab{padding:6px 18px;border-radius:8px;font-size:12px;font-weight:500;cursor:pointer;color:var(--text2);border:none;background:transparent;font-family:var(--sans);transition:.18s}
+        .tab.on{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+        .tcard{border-radius:13px;border:1px solid var(--border);padding:14px 15px;margin-bottom:10px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;cursor:pointer}
+        .tcard:hover{transform:translateY(-1px);border-color:var(--purple)}
+        .tcard.closed-win{border-color:rgba(0,217,139,.22);background:linear-gradient(135deg,var(--bg2),rgba(0,217,139,.03))}
+        .tcard.closed-loss{border-color:rgba(255,69,96,.17);background:linear-gradient(135deg,var(--bg2),rgba(255,69,96,.02))}
+        .tcard::before{content:'';position:absolute;top:0;right:0;left:0;height:2px}
+        .tcard.closed-win::before{background:var(--green);opacity:.6}
+        .tcard.closed-loss::before{background:var(--red);opacity:.5}
+        .tc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+        .tc-sym{font-family:var(--mono);font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+        .tc-num{background:var(--bg4);padding:2px 8px;border-radius:20px;font-size:11px;color:var(--text2);font-weight:400}
+        .tc-badges{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap}
+        .bdg{font-size:10px;padding:2px 7px;border-radius:4px;font-family:var(--mono);font-weight:600}
+        .bdg-long{background:var(--gdim);color:var(--green);border:1px solid rgba(0,217,139,.2)}
+        .bdg-short{background:var(--rdim);color:var(--red);border:1px solid rgba(255,69,96,.2)}
+        .tc-pnl{font-family:var(--mono);font-size:19px;font-weight:700;text-align:left;line-height:1}
+        .tc-pnl.pos{color:var(--green)}.tc-pnl.neg{color:var(--red)}.tc-pnl.zero{color:var(--text3)}
+        .tc-pnl-sub{font-size:10px;color:var(--text3);font-family:var(--mono);text-align:left;margin-top:3px}
+        .tc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:9px}
+        @media(max-width:500px){.tc-grid{grid-template-columns:1fr 1fr}}
+        .pbox{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+        .pbox-lbl{font-size:9px;font-family:var(--mono);color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+        .pbox-val{font-family:var(--mono);font-size:12px;font-weight:700}
+        .pbox-val.g{color:var(--green)}.pbox-val.r{color:var(--red)}.pbox-val.live{color:var(--blue)}
+        .tc-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:7px}
+        .tc-note{font-size:12px;color:var(--text2);padding:7px 10px;background:var(--bg4);border-radius:7px;border-right:2px solid var(--purple);line-height:1.55;margin-bottom:8px}
+        .tc-exit-note{border-right-color:var(--gold)}
+        .tc-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+        .tc-ts{margin-right:auto;font-size:10px;color:var(--text3);font-family:var(--mono)}
+        .ai-field{margin-top:6px;padding:6px 10px;background:var(--bg3);border-radius:8px;font-size:11px;border-right:2px solid var(--purple)}
+        .ai-label{font-weight:600;color:var(--purple);margin-left:6px;font-size:10px;text-transform:uppercase}
+        .reversal-line{font-size:11px;color:var(--gold);margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+        .tcard.missed-zone{border-color:rgba(255,140,0,.35)!important;background:linear-gradient(135deg,var(--bg2),rgba(255,140,0,.04))!important}
+        .tcard.missed-zone::before{background:linear-gradient(90deg,#ff8c00,#ffb347)!important;opacity:.7}
+        :root{--orange:#ff8c00}
+        .spin{width:12px;height:12px;border:2px solid var(--border2);border-top-color:var(--purple);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes pulse-badge{0%,100%{opacity:1}50%{opacity:.4}}
+        .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s}
+        .overlay.open{opacity:1;pointer-events:all}
+        .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rad2);width:100%;max-width:650px;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;animation:mIn .2s ease}
+        @keyframes mIn{from{transform:scale(.96) translateY(8px)}to{transform:none}}
+        .modal-hd{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--border);flex-shrink:0}
+        .modal-ttl{font-family:var(--mono);font-size:13px;font-weight:600}
+        .modal-x{background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:4px 8px;border-radius:6px;transition:.15s}
+        .modal-x:hover{background:var(--rdim);color:var(--red)}
+        .modal-bd{padding:0.8rem;overflow-y:auto;flex:1}
+        .radio-group{display:flex;gap:20px;margin-top:5px}
+        .radio-group label{display:flex;align-items:center;gap:6px;font-size:13px;font-family:var(--sans);color:var(--text);cursor:pointer;transition:all 0.2s;padding:4px 8px;border-radius:8px}
+        .radio-group label.selected-radio{box-shadow:0 0 0 2px black;background:rgba(0,0,0,0.1)}
+        .radio-group input[type="radio"]{width:16px;height:16px;margin:0;accent-color:var(--purple)}
+        .checkbox-group{margin-top:5px}
+        .checkbox-group label{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+        .checkbox-group input[type="checkbox"]{width:18px;height:18px;margin:0;accent-color:var(--purple);cursor:pointer}
+        .checkbox-group label.checked-checkbox{box-shadow:0 0 0 2px black;background:rgba(0,0,0,0.05);border-radius:8px;padding:4px 8px}
+        .sub-fields{margin-top:8px;margin-right:20px;padding-right:10px;border-right:2px solid var(--purple)}
+        .edit-icon{cursor:pointer;margin-right:5px;font-size:14px;transition:0.2s}
+        .edit-icon:hover{color:var(--purple);transform:scale(1.1)}
+        #chart-container{width:100%;height:520px;background:#030508;border-radius:12px;overflow:hidden;position:relative}
+        #lwc-chart{width:100%;height:100%}
+        #chart-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--text3);background:#030508;border-radius:12px;z-index:5}
+        #chart-legend{position:absolute;top:10px;right:12px;z-index:10;font-family:var(--mono);font-size:11px;background:rgba(3,5,8,.92);border:1px solid rgba(191,128,255,.25);border-radius:8px;padding:8px 12px;display:none;pointer-events:none;min-width:160px;backdrop-filter:blur(4px)}
+        #chart-legend .cl-time{color:#6a7f96;font-size:10px;margin-bottom:6px;letter-spacing:.02em}
+        #chart-legend .cl-row{display:flex;justify-content:space-between;gap:14px;margin-bottom:3px}
+        #chart-legend .cl-lbl{color:#5a7090;font-size:10px}
+        #chart-legend .cl-val{font-weight:600;color:#c8d8e8}
+        #chart-legend .cl-chg{font-size:10px;font-weight:600}
+        .chart-info{font-family:var(--mono);font-size:11px;color:var(--text2);display:flex;gap:15px;flex-wrap:wrap;margin-top:12px;padding:0 4px}
+        .chart-info span{color:var(--text);background:var(--bg4);padding:2px 8px;border-radius:20px}
+        .empty{text-align:center;padding:2.5rem 1rem;color:var(--text3)}
+        .empty-ico{font-size:26px;margin-bottom:10px;opacity:.4}
+        .overall-btn{background:var(--purple);color:white;border:none;padding:8px 20px;border-radius:30px;cursor:pointer;font-weight:500;margin-bottom:1rem;transition:0.2s}
+        .overall-btn:hover{opacity:0.85;transform:scale(0.98)}
+        #toast{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);padding:10px 22px;border-radius:10px;font-size:13px;background:var(--bg4);border:1px solid var(--border3);color:var(--text);box-shadow:0 8px 32px rgba(0,0,0,.4);opacity:0;transition:opacity .25s;pointer-events:none;z-index:9999;white-space:nowrap}
+        #toast.show{opacity:1}
+        #ver-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:5px 16px;display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);z-index:100}
+        .help-text{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.4}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="hdr">
+        <a href="/" class="brand">
+            <div class="brand-logo">📓</div>
+            <div>
+                <div class="brand-name">Price<em>Journal</em></div>
+                <div class="brand-sub">ثبت معاملات بسته · چارت حرفه‌ای · ارزیابی دستی + تحلیل کلی هوشمند</div>
+            </div>
+        </a>
+        <div class="hdr-right">
+            <a href="/" class="back-btn">← بازگشت</a>
+            <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()">🌙</button>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="scard" style="--sa:var(--blue)"><div class="scard-lbl">معاملات ثبت شده</div><div class="scard-val bl" id="st-total">—</div><div class="scard-sub">کل تریدها</div></div>
+        <div class="scard" style="--sa:var(--purple)"><div class="scard-lbl">برد / باخت</div><div class="scard-val pu" id="st-wr">—</div><div class="scard-sub" id="st-wr-detail">برد: — | باخت: —</div></div>
+        <div class="scard" style="--sa:var(--green)"><div class="scard-lbl">مجموع R</div><div class="scard-val g" id="st-pnl">—</div><div class="scard-sub">مجموع R خروج</div></div>
+        <div class="scard" style="--sa:var(--gold)"><div class="scard-lbl">نرخ برد</div><div class="scard-val gold" id="st-winrate">—</div><div class="scard-sub">Win Rate</div></div>
+    </div>
+
+    <div class="tabs" style="margin-bottom:1rem;">
+        <button class="tab on" id="tab-trades" onclick="showTab('trades')">📋 معاملات</button>
+        <button class="tab" id="tab-overall" onclick="showTab('overall')">📊 تحلیل کلی هوش مصنوعی</button>
+    </div>
+
+    <div id="trades-panel" style="display:block;">
+        <div class="main-grid">
+            <div class="form-col">
+                <div class="sec"><div class="sec-hd"><div class="sec-ttl"><span class="sdot pu"></span>ثبت معامله جدید (خودکار)</div></div>
+                <div class="sec-bd">
+                    <div class="frow"><div class="fld"><label>نماد</label><input type="text" id="f-sym" placeholder="EURUSD، XAUUSD، BTCUSDT..." dir="ltr" oninput="this.value=this.value.toUpperCase().replace('/','');onSymChange()"></div><div class="fld"><label>تایم‌فریم</label><select id="f-tf"><option value="1m">1 دقیقه</option><option value="5m">5 دقیقه</option><option value="15m">15 دقیقه</option><option value="1h" selected>1 ساعت</option><option value="4h">4 ساعت</option><option value="1d">روزانه</option></select></div></div>
+                    <div class="frow" style="margin-top:11px"><div class="fld"><label>تاریخ ورود (تهران)</label><input type="date" id="f-date" dir="ltr"></div><div class="fld"><label>ساعت ورود (تهران)</label><input type="time" id="f-time" dir="ltr"></div></div>
+                    <div class="fld"><label>قیمت ورود</label><input type="number" id="f-entry" placeholder="0.00000" step="any" dir="ltr"></div>
+                    <div class="fld"><label>جهت معامله</label><div class="dir-toggle"><button class="dir-btn buy on" id="btn-buy" onclick="setDir('BUY')">↑ BUY / Long</button><button class="dir-btn sell" id="btn-sell" onclick="setDir('SELL')">↓ SELL / Short</button></div></div>
+                    <div class="fld"><label>نوع ورود</label><select id="input-type"><option value="price" selected>بر اساس قیمت</option><option value="pips">بر اساس پیپ</option></select></div>
+                    <div id="pips-inputs" style="display:none"><div class="frow"><div class="fld"><label>استاپ لاس (پیپ)</label><input type="number" id="f-sl-pips" placeholder="20" step="any" dir="ltr"></div><div class="fld"><label>تارگت (پیپ)</label><input type="number" id="f-tp-pips" placeholder="40" step="any" dir="ltr"></div></div></div>
+                    <div id="price-inputs"><div class="frow"><div class="fld"><label>قیمت استاپ لاس</label><input type="number" id="f-sl-price" placeholder="0.00000" step="any" dir="ltr"></div><div class="fld"><label>قیمت تارگت</label><input type="number" id="f-tp-price" placeholder="0.00000" step="any" dir="ltr"></div></div></div>
+                    <div class="fld"><label>یادداشت / ستاپ</label><textarea id="f-note" placeholder="دلیل ورود، سطح کلیدی، استراتژی..."></textarea></div>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                        <button class="btn btn-g btn-full" id="submit-btn" onclick="submitTrade()" style="flex:1">+ ثبت معامله خودکار</button>
+                        <button type="button" id="auto-missed-toggle" onclick="toggleAutoMissed()"
+                            style="display:inline-flex;align-items:center;gap:5px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,140,0,.3);background:var(--bg3);color:var(--text3);font-size:12px;cursor:pointer;font-family:var(--sans);transition:.18s;white-space:nowrap">
+                            🚫 جا مونده
+                        </button>
+                    </div>
+                    <div style="font-size:11px; color:var(--text3); margin-top:8px; text-align:center;">⚠️ فقط تریدهایی که SL یا TP خورده باشند ثبت می‌شوند</div>
+                </div></div>
+                <div class="sec" style="margin-top:1rem"><div class="sec-hd"><div class="sec-ttl"><span class="sdot pu"></span>ثبت دستی ترید قدیمی</div></div>
+                <div class="sec-bd">
+                    <button class="btn btn-pu btn-full" onclick="openManualForm()">📝 ثبت دستی کامل (برای تریدهای قدیمی)</button>
+                    <div style="font-size:11px; color:var(--text3); margin-top:8px; text-align:center;">این فرم بدون بررسی خودکار است و شما تمام اطلاعات را دستی وارد می‌کنید</div>
+                </div></div>
+            </div>
+            <div class="list-col">
+                <div style="margin-bottom:1rem;display:flex;flex-direction:column;gap:8px">
+  <div class="tabs" style="flex-wrap:wrap;gap:6px;align-items:center">
+    <button class="tab on" onclick="setTab('all',this)">همه</button>
+    <button class="tab" onclick="setTab('closed',this)">✓ بسته شده</button>
+    <button onclick="openClearAllModal()" style="margin-right:auto;padding:5px 12px;border-radius:8px;border:1px solid rgba(231,76,60,.4);background:rgba(231,76,60,.1);color:#e74c3c;font-size:11px;cursor:pointer;font-family:var(--mono)">🗑 پاک کردن همه</button>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+    <input id="sym-search" type="text" placeholder="🔍 نماد (مثلاً EURUSD)" oninput="onSymSearch()" style="flex:1;min-width:120px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;font-family:var(--mono)">
+    <input id="date-from" type="date" onchange="onDateFilter()" style="padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:11px">
+    <span style="font-size:11px;color:var(--text3)">تا</span>
+    <input id="date-to" type="date" onchange="onDateFilter()" style="padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:11px">
+    <button onclick="clearDateFilter()" style="padding:5px 9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text3);font-size:11px;cursor:pointer">✕</button>
+  </div>
+</div>
+                <div id="trades-wrap"><div class="empty"><div class="spin" style="width:20px;height:20px;margin:0 auto;"></div><p>در حال بارگذاری...</p></div></div>
+                <div id="pagination-wrap" style="display:none;margin-top:10px;display:flex;justify-content:center;align-items:center;gap:8px;padding:8px 0"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overall-panel" style="display:none;">
+        <div class="sec" style="margin-bottom:1rem">
+            <div class="sec-hd"><div class="sec-ttl"><span class="sdot pu"></span>سوال از هوش مصنوعی</div></div>
+            <div class="sec-bd">
+
+                <!-- فیلتر نماد -->
+                <div class="fld" style="margin-bottom:12px">
+                    <label style="font-size:11px">🔍 فیلتر نماد (اختیاری):</label>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <select id="ai-sym-filter" style="flex:1;font-family:var(--mono);font-size:13px" onchange="onAiSymFilterChange()">
+                            <option value="">📊 همه نمادها</option>
+                        </select>
+                        <span id="ai-sym-count" style="font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap"></span>
+                    </div>
+                    <div id="ai-sym-info" style="display:none;margin-top:6px;padding:6px 10px;background:var(--purdim);border:1px solid rgba(160,112,255,.25);border-radius:8px;font-size:11px;color:var(--purple);font-family:var(--mono)"></div>
+                </div>
+
+                <!-- فیلتر حالت -->
+                <div class="fld" style="margin-bottom:12px">
+                    <label style="font-size:11px">🎛️ حالت تحلیل:</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:5px">
+                        <button id="ai-mode-all" class="btn btn-sm btn-pu" onclick="setAiMode('all',this)">🔀 همه</button>
+                        <button id="ai-mode-trades" class="btn btn-sm" onclick="setAiMode('trades_only',this)">📈 فقط تریدها</button>
+                        <button id="ai-mode-zones" class="btn btn-sm" onclick="setAiMode('zones_only',this)">🚫 فقط نواحی</button>
+                    </div>
+                    <div id="ai-mode-info" style="margin-top:5px;font-size:10px;color:var(--text3)">همه تریدها و نواحی جا مونده با هم تحلیل میشن</div>
+                </div>
+
+                <div style="font-size:10px;color:var(--text3);margin-bottom:8px">📌 پرامپت آماده:</div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="preset-btns">
+                    <button class="btn btn-sm" onclick="setPreset('full',this)">📊 تحلیل کامل</button>
+                    <button class="btn btn-sm" onclick="setPreset('sl',this)">🔄 مشکل استاپ</button>
+                    <button class="btn btn-sm" onclick="setPreset('fr',this)">🛡️ فری‌ریسک</button>
+                    <button class="btn btn-sm" onclick="setPreset('target',this)">🎯 بهینه تارگت</button>
+                    <button class="btn btn-sm" onclick="setPreset('rr',this)">📐 R/R و ستاپ</button>
+                    <button class="btn btn-sm" onclick="setPreset('timing',this)">🕐 ساعت و نماد</button>
+                </div>
+                <div class="fld" style="margin-bottom:8px">
+                    <label style="font-size:11px">✏️ سوال دستی یا ویرایش پرامپت:</label>
+                    <textarea id="custom-prompt" rows="3" style="font-size:12px;font-family:var(--mono);direction:rtl" placeholder="مثال: چرا در ستاپ برگشتی ضعیف‌ترم؟"></textarea>
+                    <div style="font-size:10px;color:var(--text3);margin-top:3px">💡 داده‌های آماری خودکار ضمیمه می‌شوند</div>
+                </div>
+                <button class="overall-btn" style="margin:0;width:100%" onclick="loadOverallAnalysis()">🤖 اجرای تحلیل</button>
+            </div>
+        </div>
+        <div id="overall-content"><div class="empty"><div class="empty-ico">🤖</div><p>پرامپت انتخاب کنید و تحلیل را اجرا کنید.</p></div></div>
+    </div>
+</div>
+
+<!-- مودال چارت -->
+<div class="overlay" id="chart-overlay" onclick="if(event.target===this) closeChartOv()">
+    <div class="modal" style="max-width:1000px"><div class="modal-hd"><span class="modal-ttl" id="chart-title">چارت کندلی</span><button class="modal-x" onclick="closeChartOv()">✕</button></div><div class="modal-bd"><div id="chart-container"><div id="chart-loader"><div class="spin" style="width:20px;height:20px"></div><span>بارگذاری چارت...</span></div><div id="lwc-chart"></div><div id="chart-legend"><div class="cl-time" id="cl-time"></div><div class="cl-row"><span class="cl-lbl">O</span><span class="cl-val" id="cl-o"></span></div><div class="cl-row"><span class="cl-lbl">H</span><span class="cl-val" id="cl-h" style="color:var(--green)"></span></div><div class="cl-row"><span class="cl-lbl">L</span><span class="cl-val" id="cl-l" style="color:var(--red)"></span></div><div class="cl-row"><span class="cl-lbl">C</span><span class="cl-val" id="cl-c"></span><span class="cl-chg" id="cl-chg"></span></div></div></div><div class="chart-info" id="chart-info"></div></div></div>
+</div>
+
+<!-- مودال ارزیابی دستی — بازنویسی شده -->
+<div class="overlay" id="review-overlay">
+  <div class="modal" style="max-width:660px">
+    <div class="modal-hd">
+      <span class="modal-ttl">📝 ارزیابی ترید</span>
+      <button class="modal-x" onclick="closeReviewModal()">✕</button>
+    </div>
+    <div class="modal-bd" id="rv-modal-body">
+      <!-- محتوا توسط JS پر میشه -->
+    </div>
+  </div>
+</div>
+<!-- مودال ثبت دستی کامل -->
+<div class="overlay" id="manual-modal" onclick="if(event.target===this) closeManualModal()">
+    <div class="modal" style="max-width:700px">
+        <div class="modal-hd">
+            <div style="display:flex;align-items:center;gap:10px;flex:1">
+                <span class="modal-ttl" id="manual-modal-title">📝 ثبت دستی ترید</span>
+                <button type="button" id="missed-zone-toggle" onclick="toggleMissedZone()"
+                    style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:7px;border:1px solid rgba(255,140,0,.3);background:var(--bg3);color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--sans);transition:.18s">
+                    🚫 ناحیه جا مونده
+                </button>
+            </div>
+            <button class="modal-x" onclick="closeManualModal()">✕</button>
+        </div>
+        <div class="modal-bd">
+
+            <!-- بخش ۱: اطلاعات پایه -->
+            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:10px">① اطلاعات پایه</div>
+            <div class="frow">
+                <div class="fld"><label>نماد</label><input id="manual-sym" placeholder="EURUSD, XAUUSD, BTCUSDT" oninput="this.value=this.value.toUpperCase()"></div>
+                <div class="fld"><label>تایم‌فریم</label>
+                    <select id="manual-tf">
+                        <option value="1m">1m</option><option value="5m">5m</option>
+                        <option value="15m">15m</option><option value="30m">30m</option>
+                        <option value="1h" selected>1h</option><option value="4h">4h</option>
+                        <option value="1d">1d</option>
+                    </select>
+                </div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>جهت</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+                        <button type="button" id="man-buy-btn" class="btn btn-sm btn-g" onclick="manSetDir('BUY')">↑ BUY</button>
+                        <button type="button" id="man-sell-btn" class="btn btn-sm" onclick="manSetDir('SELL')">↓ SELL</button>
+                    </div>
+                    <input type="hidden" id="manual-dir" value="BUY">
+                </div>
+                <div class="fld"><label>نتیجه</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px">
+                        <button type="button" id="man-win-btn" class="btn btn-sm btn-g" onclick="manSetOutcome('win')">✅ برد</button>
+                        <button type="button" id="man-loss-btn" class="btn btn-sm" onclick="manSetOutcome('loss')">❌ باخت</button>
+                    </div>
+                    <input type="hidden" id="manual-outcome" value="win">
+                </div>
+            </div>
+
+            <!-- بخش ۲: قیمت‌ها -->
+            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin:14px 0 10px">② قیمت‌ها</div>
+            <div class="frow">
+                <div class="fld"><label>ورود</label><input type="number" id="manual-entry" step="any" placeholder="1.08500"></div>
+                <div class="fld"><label>خروج</label><input type="number" id="manual-exit" step="any" placeholder="1.09000"></div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>استاپ لاس</label><input type="number" id="manual-sl" step="any" placeholder="1.08200"></div>
+                <div class="fld"><label>تارگت</label><input type="number" id="manual-tp" step="any" placeholder="1.09300"></div>
+            </div>
+            <div class="frow" style="margin-top:6px">
+                <div class="fld" style="background:var(--bg3);border-radius:8px;padding:8px 10px">
+                    <div style="font-size:10px;color:var(--text3)">محاسبه خودکار</div>
+                    <div style="font-size:12px;font-family:var(--mono);margin-top:4px" id="man-calc-display">— قیمت‌ها را وارد کنید</div>
+                </div>
+            </div>
+
+            <!-- بخش ۳: زمان -->
+            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin:14px 0 10px">③ زمان</div>
+            <div class="frow">
+                <div class="fld"><label>تاریخ ورود (تهران)</label><input type="datetime-local" id="manual-entryTime" step="1"></div>
+                <div class="fld"><label>تاریخ خروج (تهران)</label><input type="datetime-local" id="manual-exitTime" step="1"></div>
+            </div>
+
+            <!-- بخش ۴: یادداشت -->
+            <div class="fld" style="margin-top:10px"><label>💬 یادداشت / ستاپ</label><textarea id="manual-note" rows="2" placeholder="دلیل ورود، سطح کلیدی، نوع ستاپ..."></textarea></div>
+
+            <hr style="margin:16px 0;border-color:var(--border)">
+
+            <!-- بخش ۵: ارزیابی — همون استایل review modal -->
+            <div style="font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.06em;margin-bottom:12px">④ ارزیابی (اختیاری)</div>
+
+            <!-- MFE -->
+            <div class="fld" id="man-mfe-wrap">
+                <label id="man-mfe-label">📈 حداکثر سود شناور (پیپ)</label>
+                <input type="number" id="manual-mfe" step="any" placeholder="مثلاً 45.2">
+                <div class="help-text">بیشترین فاصله‌ای که قیمت به نفع شما رفت</div>
+            </div>
+
+            <!-- MAE (فقط برد) -->
+            <div class="fld" id="man-mae-wrap" style="display:none">
+                <label>📉 حداکثر ضرر شناور قبل 1R (پیپ)</label>
+                <input type="number" id="manual-mae" step="any" placeholder="مثلاً 12">
+            </div>
+
+            <!-- Pullback (فقط برد) -->
+            <div class="fld" id="man-pullback-wrap" style="display:none">
+                <label>🔄 بعد از 1R، به نقطه ورود برگشت؟</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="man-pb-btns">
+                    <button type="button" class="btn btn-sm" id="man-pb-yes" onclick="manSetPb('yes')">✅ بله، برگشت</button>
+                    <button type="button" class="btn btn-sm" id="man-pb-no" onclick="manSetPb('no')">❌ خیر، برنگشت</button>
+                </div>
+                <input type="hidden" id="manual-pullback" value="">
+            </div>
+
+            <!-- Free risk -->
+            <div class="fld">
+                <label>🛡️ فری‌ریسک</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="man-fr-btns">
+                    <button type="button" class="btn btn-sm" id="man-fr-yes" onclick="manSetFr('yes')">✅ انجام شد</button>
+                    <button type="button" class="btn btn-sm" id="man-fr-no" onclick="manSetFr('no')">❌ انجام نشد</button>
+                </div>
+                <input type="hidden" id="manual-free-risk" value="no">
+            </div>
+
+            <!-- برگشت بعد SL (فقط باخت) -->
+            <div class="fld" id="man-reversal-wrap" style="display:none">
+                <label>🔄 بعد از SL، قیمت برگشت؟</label>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="man-rev-btns">
+                    <button type="button" class="btn btn-sm" id="man-rev-yes" onclick="manSetRev('yes')">✅ بله برگشت</button>
+                    <button type="button" class="btn btn-sm" id="man-rev-no" onclick="manSetRev('no')">❌ نه برنگشت</button>
+                </div>
+                <input type="hidden" id="manual-reversal" value="no">
+                <div id="man-rev-sub" style="display:none;margin-top:8px;padding-right:10px;border-right:2px solid var(--purple)">
+                    <div class="frow">
+                        <div class="fld"><label>📏 از SL تا برگشت (پیپ)</label><input type="number" id="manual-reversal-from" step="any" placeholder="مثلاً 8"></div>
+                        <div class="fld"><label>🎯 تا کجا از ورود (پیپ)</label><input type="number" id="manual-reversal-target" step="any" placeholder="مثلاً 35"></div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-g btn-full" onclick="submitManualTrade()" style="margin-top:20px">💾 ذخیره ترید دستی</button>
+        </div>
+    </div>
+</div>
+
+<!-- مودال ویرایش کامل ترید -->
+<div class="overlay" id="edit-overlay" onclick="if(event.target===this) closeEditModal()">
+    <div class="modal" style="max-width:750px">
+        <div class="modal-hd"><span class="modal-ttl">✏️ ویرایش کامل ترید</span><button class="modal-x" onclick="closeEditModal()">✕</button></div>
+        <div class="modal-bd">
+            <input type="hidden" id="edit-tid">
+            <div class="frow">
+                <div class="fld"><label>نماد</label><input id="edit-sym"></div>
+                <div class="fld"><label>تایم فریم</label><input id="edit-tf"></div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>جهت</label><select id="edit-direction"><option value="BUY">BUY</option><option value="SELL">SELL</option></select></div>
+                <div class="fld"><label>نتیجه</label><select id="edit-outcome"><option value="win">برد</option><option value="loss">باخت</option></select></div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>قیمت ورود</label><input type="number" id="edit-entry" step="any"></div>
+                <div class="fld"><label>قیمت خروج</label><input type="number" id="edit-exit" step="any"></div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>استاپ لاس</label><input type="number" id="edit-sl" step="any"></div>
+                <div class="fld"><label>تارگت</label><input type="number" id="edit-tp" step="any"></div>
+            </div>
+            <div class="frow">
+                <div class="fld"><label>تاریخ ورود</label><input type="datetime-local" id="edit-entryTime" step="1"></div>
+                <div class="fld"><label>تاریخ خروج</label><input type="datetime-local" id="edit-exitTime" step="1"></div>
+            </div>
+            <div class="fld"><label>یادداشت</label><textarea id="edit-note" rows="2"></textarea></div>
+            <hr style="margin:15px 0; border-color:var(--border)">
+            <div class="sec-ttl" style="margin-bottom:12px"><span class="sdot pu"></span>ارزیابی دستی</div>
+            <div class="fld"><label>📈 حداکثر سود شناور (پیپ یا R)</label><input type="number" id="edit-mfe" step="any"></div>
+            <div class="fld"><label>📉 حداکثر ضرر شناور</label><input type="number" id="edit-mae" step="any"></div>
+            <div class="fld"><label>🔄 برگشت به ورود بعد 1R؟</label>
+                <select id="edit-pullback"><option value="">نامشخص</option><option value="yes">بله</option><option value="no">خیر</option></select>
+            </div>
+            <div class="fld"><label>🔄 برگشت بعد از استاپ لاس</label>
+                <div><input type="checkbox" id="edit-reversal"> بله</div>
+                <div id="edit-reversal-fields" style="display:none; margin-top:10px">
+                    <div class="fld"><label>از چند پیپ بعد از SL شروع شد؟</label><input type="number" id="edit-reversal-from" step="any"></div>
+                    <div class="fld"><label>تا چه تارگتی رفت؟ (پیپ یا R)</label><input type="number" id="edit-reversal-target" step="any"></div>
+                </div>
+            </div>
+            <div class="fld"><label><input type="checkbox" id="edit-free-risk"> 🛡️ فری ریسک انجام شد</label></div>
+            <button class="btn btn-g btn-full" onclick="saveFullEdit()" style="margin-top:20px">💾 ذخیره تغییرات</button>
+        </div>
+    </div>
+</div>
+
+<!-- مودال پاک کردن همه تریدها -->
+<div class="overlay" id="clearall-overlay" onclick="if(event.target===this) closeClearAllModal()">
+    <div class="modal" style="max-width:400px">
+        <div class="modal-hd" style="border-bottom:2px solid rgba(231,76,60,.4)">
+            <span class="modal-ttl" style="color:#e74c3c">🗑 پاک کردن همه تریدها</span>
+            <button class="modal-x" onclick="closeClearAllModal()">✕</button>
+        </div>
+        <div class="modal-bd">
+            <div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.4);border-radius:10px;padding:16px;margin-bottom:16px;text-align:center">
+                <div style="font-size:28px;margin-bottom:8px">⚠️</div>
+                <div style="font-weight:700;color:#e74c3c;font-size:15px;margin-bottom:6px">این عمل برگشت‌ناپذیر است!</div>
+                <div style="font-size:13px;color:var(--text2);line-height:1.7">تمام تریدها، ارزیابی‌ها و داده‌های ژورنال برای همیشه پاک می‌شوند.<br>از Gist و فایل لوکال هر دو حذف می‌شود.</div>
+            </div>
+            <div style="margin-bottom:14px">
+                <label style="font-size:12px;color:var(--text2);margin-bottom:6px;display:block">برای تأیید، عبارت <b style="color:#e74c3c;font-family:var(--mono)">DELETE ALL</b> را تایپ کنید:</label>
+                <input id="clearall-confirm" type="text" placeholder="DELETE ALL" oninput="onClearAllInput()" style="width:100%;padding:8px 12px;border-radius:8px;border:2px solid rgba(231,76,60,.3);background:var(--bg3);color:var(--text);font-size:14px;font-family:var(--mono);box-sizing:border-box">
+            </div>
+            <button id="clearall-btn" onclick="confirmClearAll()" disabled style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(231,76,60,.3);color:rgba(231,76,60,.5);font-size:14px;font-weight:700;cursor:not-allowed;transition:.2s">🗑 بله، همه را پاک کن</button>
+        </div>
+    </div>
+</div>
+
+<!-- مودال ادیت سریع SL/TP -->
+<div class="overlay" id="esl-overlay" onclick="if(event.target===this) closeEditSlModal()">
+    <div class="modal" style="max-width:420px">
+        <div class="modal-hd"><span class="modal-ttl">✏️ ادیت استاپ لاس</span><button class="modal-x" onclick="closeEditSlModal()">✕</button></div>
+        <div class="modal-bd">
+            <input type="hidden" id="esl-tid">
+            <div id="esl-info" style="margin-bottom:14px;font-size:13px"></div>
+            <div class="frow">
+                <div class="fld">
+                    <label>🔴 استاپ لاس جدید</label>
+                    <input type="number" id="esl-sl" step="any" oninput="previewEditSl()" placeholder="قیمت SL جدید">
+                </div>
+                <div class="fld">
+                    <label>🟢 تارگت (اختیاری)</label>
+                    <input type="number" id="esl-tp" step="any" oninput="previewEditSl()" placeholder="قیمت TP (اگه تغییر کرده)">
+                </div>
+            </div>
+            <div id="esl-preview"></div>
+            <div style="background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin:14px 0">
+                💡 بعد از ذخیره، تمام فیلدهای وابسته (R/R، risk pips، passed_1r، exit_type و ...) به صورت خودکار به‌روز می‌شوند.
+            </div>
+            <button class="btn btn-g btn-full" onclick="saveEditSl()">💾 ذخیره و به‌روزرسانی R/R</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast"></div>
+<!-- Weekly Review Modal -->
+<div id="weekly-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:2px solid #8e44ad;border-radius:14px;padding:24px 20px;width:360px;max-width:94vw;direction:rtl;max-height:88vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:700;color:#a855f7">📊 مرور هفتگی</div>
+      <button onclick="document.getElementById('weekly-overlay').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
+    </div>
+    <div id="weekly-stats" style="display:none;background:var(--bg);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;line-height:2"></div>
+    <div id="weekly-loading" style="text-align:center;padding:30px;color:var(--muted);font-size:13px">در حال بارگذاری...</div>
+    <div id="weekly-analysis" style="display:none;font-size:13px;line-height:1.9;color:var(--text);white-space:pre-wrap"></div>
+  </div>
+</div>
+
+<!-- Admin Recalc Modal -->
+<div id="admin-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:2px solid #c0392b;border-radius:14px;padding:28px 24px;width:320px;max-width:92vw;text-align:center;direction:rtl">
+    <div style="font-size:18px;font-weight:700;color:#e74c3c;margin-bottom:6px">⚙️ ادمین — Fix داده‌ها</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:18px">تریدهای قدیمی رو با منطق جدید recalculate میکنه.<br>فیلدهای review دست نخورد.</div>
+    <div id="admin-progress-wrap" style="display:none;margin-bottom:14px">
+      <div style="background:var(--bg);border-radius:8px;height:10px;overflow:hidden;margin-bottom:6px">
+        <div id="admin-progress-bar" style="height:100%;background:#c0392b;width:0%;transition:width .3s"></div>
+      </div>
+      <div id="admin-progress-text" style="font-size:12px;color:var(--muted)">در حال پردازش...</div>
+    </div>
+    <div id="admin-result" style="display:none;margin-bottom:14px;font-size:13px;max-height:180px;overflow-y:auto;text-align:right;background:var(--bg);border-radius:8px;padding:10px;line-height:1.8"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button id="admin-run-btn" onclick="runRecalculate()" style="background:#c0392b;color:#fff;border:none;border-radius:8px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer">اجرا کن</button>
+      <button onclick="closeAdminRecalc()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:9px 18px;font-size:14px;cursor:pointer">بستن</button>
+    </div>
+  </div>
+</div>
+<div id="ver-bar"><span>PriceAlert · <span style="color:var(--purple)">Journal + Manual Review + AI Overall</span></span><span id="ver-time"></span><button onclick="openAdminRecalc()" style="margin-right:10px;background:#c0392b;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700;letter-spacing:.5px">⚙️ ادمین</button>
+<button onclick="openWeeklyReview()" style="margin-right:6px;background:#8e44ad;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer;font-weight:700">📊 هفتگی</button></div>
+
+<script>
+    (function(){applyTheme(localStorage.getItem('pa_theme')||'dark')})();
+    function applyTheme(t){document.body.classList.toggle('light',t==='light');document.getElementById('theme-toggle').textContent=t==='light'?'☀️':'🌙'}
+    function toggleTheme(){const n=document.body.classList.contains('light')?'dark':'light';localStorage.setItem('pa_theme',n);applyTheme(n)}
+    setInterval(()=>{document.getElementById('ver-time').textContent=new Date().toLocaleTimeString('fa-IR',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',second:'2-digit'})+' تهران'},1000);
+    (function(){const now=new Date();document.getElementById('f-date').value=now.toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'});document.getElementById('f-time').value=now.toLocaleTimeString('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit'})})();
+
+
+    async function openWeeklyReview(){
+        const overlay=document.getElementById('weekly-overlay');
+        const loading=document.getElementById('weekly-loading');
+        const stats=document.getElementById('weekly-stats');
+        const analysis=document.getElementById('weekly-analysis');
+        overlay.style.display='flex';
+        loading.style.display='block';
+        stats.style.display='none';
+        analysis.style.display='none';
+        try{
+            const r=await fetch('/api/weekly_review');
+            const d=await r.json();
+            loading.style.display='none';
+            if(d.ok){
+                stats.style.display='block';
+                const emo=d.total_r>=0?'📈':'📉';
+                stats.innerHTML=
+                    `<b>${d.week_start} تا ${d.week_end}</b><br>`+
+                    `تریدها: ${d.count} | برد: ${d.wins} | باخت: ${d.losses} | نرخ برد: ${d.winrate}%<br>`+
+                    `مجموع R: <b style="color:${d.total_r>=0?'#2ecc71':'#e74c3c'}">${d.total_r>=0?'+':''}${d.total_r}R</b> ${emo} | میانگین MFE: ${d.avg_mfe_r||'?'}R<br>`+
+                    (d.beyond_tp?`⚠️ ${d.beyond_tp} برد — MFE از TP گذشت (${d.avg_left}R روی میز موند)<br>`:'✅ زودخروج نداشتی<br>')+
+                    (d.loss_passed_1r?`⚠️ ${d.loss_passed_1r} باخت بعد از 1R — فری‌ریسک میشد<br>`:'')+
+                    `بهترین: ${d.best||'—'} | بدترین: ${d.worst||'—'}<br>`+
+                    (d.sym_lines?`نمادها: ${d.sym_lines}`:'');
+                analysis.style.display='block';
+                analysis.textContent=d.analysis;
+            }
+        }catch(e){
+            loading.textContent='خطا در بارگذاری';
+        }
+    }
+
+    function openAdminRecalc(){
+        document.getElementById('admin-overlay').style.display='flex';
+        document.getElementById('admin-progress-wrap').style.display='none';
+        document.getElementById('admin-result').style.display='none';
+        document.getElementById('admin-run-btn').disabled=false;
+        document.getElementById('admin-run-btn').textContent='اجرا کن';
+    }
+    function closeAdminRecalc(){document.getElementById('admin-overlay').style.display='none';}
+    async function runRecalculate(){
+        const btn=document.getElementById('admin-run-btn');
+        const wrap=document.getElementById('admin-progress-wrap');
+        const bar=document.getElementById('admin-progress-bar');
+        const txt=document.getElementById('admin-progress-text');
+        const res=document.getElementById('admin-result');
+        btn.disabled=true; btn.textContent='در حال اجرا...';
+        wrap.style.display='block'; res.style.display='none';
+        bar.style.width='0%'; txt.textContent='در حال پردازش...';
+        let pct=0;
+        const fakeProgress=setInterval(()=>{
+            pct=Math.min(pct+Math.random()*8,88);
+            bar.style.width=pct+'%';
+            txt.textContent='پردازش... '+Math.round(pct)+'%';
+        },300);
+        try{
+            const r=await fetch('/api/journal/recalculate',{method:'POST'});
+            const d=await r.json();
+            clearInterval(fakeProgress);
+            bar.style.width='100%';
+            txt.textContent='تمام شد ✓';
+            res.style.display='block';
+            if(d.ok){
+                const lines=d.report&&d.report.length?d.report.map(l=>'• '+l).join('<br>'):'همه تریدها قبلاً درست بودن';
+                res.innerHTML='<b style="color:#2ecc71">✓ '+d.fixed+' ترید fix شد</b><br><br>'+lines;
+                if(d.fixed>0) setTimeout(()=>loadTrades(),1500);
+            } else {
+                res.innerHTML='<b style="color:#e74c3c">خطا: '+(d.error||'نامشخص')+'</b>';
+            }
+        }catch(e){
+            clearInterval(fakeProgress);
+            bar.style.width='100%'; bar.style.background='#e74c3c';
+            txt.textContent='خطا در اتصال';
+            res.style.display='block';
+            res.innerHTML='<b style="color:#e74c3c">خطای شبکه: '+e.message+'</b>';
+        }
+        btn.textContent='اجرا شد ✓';
+    }
+
+    let _tt;
+    function toast(msg,dur=2700){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>el.classList.remove('show'),dur)}
+
+    let _trades=[],_dir='BUY',_tab='all',_autoMissed=false,_weekFilter='',_symSearch='',_dateFrom='',_dateTo='';
+    const CRYPTO_LIST = ['BTC','ETH','SOL','BNB','XRP','ADA','DOGE','TRX','TON','AVAX','MATIC','DOT','LINK','UNI','ATOM','LTC','SHIB','OP','ARB','NEAR','FTM','SAND','MANA'];
+    function isCrypto(sym){let s=sym.toUpperCase();for(let c of CRYPTO_LIST) if(s.includes(c)) return true;return false;}
+    function getPipMultiplier(sym){let s=sym.toUpperCase();if(s.includes('XAU')||s.includes('XAG')) return 10;if(s.includes('JPY')) return 100;return 10000;}
+    function onSymChange(){}
+    
+    async function api(method,path,body){const opts={method,headers:{'Content-Type':'application/json'}};if(body)opts.body=JSON.stringify(body);const r=await fetch(path,opts);if(!r.ok){const err=await r.json().catch(()=>({error:`HTTP ${r.status}`}));throw new Error(err.error||`HTTP ${r.status}`);}return r.json();}
+    
+    async function loadFromServer(){try{_trades=await api('GET','/api/journal');localStorage.setItem('pj_cache',JSON.stringify(_trades));render();populateAiSymFilter();}catch(e){const c=localStorage.getItem('pj_cache');if(c){try{_trades=JSON.parse(c);render();return;}catch(_){}}document.getElementById('trades-wrap').innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><p style="color:var(--red)">خطا: ${escH(e.message)}</p></div>`;}}
+    
+    function setDir(d){_dir=d;document.getElementById('btn-buy').classList.toggle('on',d==='BUY');document.getElementById('btn-sell').classList.toggle('on',d==='SELL');}
+    function toggleAutoMissed(){
+        _autoMissed=!_autoMissed;
+        const btn=document.getElementById('auto-missed-toggle');
+        const submitBtn=document.getElementById('submit-btn');
+        if(_autoMissed){
+            btn.style.background='rgba(255,140,0,.18)';btn.style.color='#ff8c00';btn.style.borderColor='#ff8c00';
+            btn.textContent='🚫 جا مونده';
+            submitBtn.textContent='+ ثبت ناحیه جا مونده';
+            submitBtn.style.background='linear-gradient(135deg,#ff8c00,#ffb347)';
+        } else {
+            btn.style.background='var(--bg3)';btn.style.color='var(--text3)';btn.style.borderColor='rgba(255,140,0,.3)';
+            btn.textContent='🚫 جا مونده';
+            submitBtn.textContent='+ ثبت معامله خودکار';
+            submitBtn.style.background='';
+        }
+    }
+    document.getElementById('input-type').addEventListener('change',function(){let val=this.value;document.getElementById('pips-inputs').style.display=val==='pips'?'block':'none';document.getElementById('price-inputs').style.display=val==='price'?'block':'none';});
+    
+    // ثبت خودکار (با بررسی SL/TP)
+    async function submitTrade(){const sym=document.getElementById('f-sym').value.trim().toUpperCase().replace('/','');const entry=parseFloat(document.getElementById('f-entry').value);const date=document.getElementById('f-date').value;const time=document.getElementById('f-time').value;if(!sym){toast('نماد را وارد کنید');return}if(!entry){toast('قیمت ورود را وارد کنید');return}if(!date){toast('تاریخ را وارد کنید');return}const size=1.0;const tf=document.getElementById('f-tf').value;const entryTime=`${date} ${time||'00:00'}`;const note=document.getElementById('f-note').value.trim();const inputType=document.getElementById('input-type').value;let sl_pips=null, tp_pips=null, sl_price=null, tp_price=null;if(inputType==='pips'){sl_pips=parseFloat(document.getElementById('f-sl-pips').value)||null;tp_pips=parseFloat(document.getElementById('f-tp-pips').value)||null;}else{sl_price=parseFloat(document.getElementById('f-sl-price').value)||null;tp_price=parseFloat(document.getElementById('f-tp-price').value)||null;}const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> در حال بررسی و ذخیره...';try{const res=await api('POST','/api/journal',{sym,entry,direction:_dir,size,tf,entryTime,note,sl_pips,tp_pips,sl_price,tp_price,is_missed_zone:_autoMissed});if(res.ok){_trades.unshift(res.trade);localStorage.setItem('pj_cache',JSON.stringify(_trades));if(_autoMissed){toast('🚫 ناحیه جا مونده ثبت شد');}else{toast(`✅ ترید ثبت شد · ${res.trade.outcome==='win'?'سود':'ضرر'} ${Math.abs(res.trade.pnl).toFixed(2)}`);}
+                _autoMissed=false;
+                const _amBtn=document.getElementById('auto-missed-toggle');const _sbtn=document.getElementById('submit-btn');
+                if(_amBtn){_amBtn.style.background='var(--bg3)';_amBtn.style.color='var(--text3)';_amBtn.style.borderColor='rgba(255,140,0,.3)';}
+                if(_sbtn){_sbtn.textContent='+ ثبت معامله خودکار';_sbtn.style.background='';}document.getElementById('f-sym').value='';document.getElementById('f-entry').value='';document.getElementById('f-sl-pips').value='';document.getElementById('f-tp-pips').value='';document.getElementById('f-sl-price').value='';document.getElementById('f-tp-price').value='';document.getElementById('f-note').value='';const now=new Date();document.getElementById('f-date').value=now.toLocaleDateString('en-CA',{timeZone:'Asia/Tehran'});document.getElementById('f-time').value=now.toLocaleTimeString('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit'});render();}else toast('⚠️ خطا: '+res.error);}catch(e){toast('⚠️ خطا: '+e.message);}btn.disabled=false;btn.innerHTML='+ ثبت معامله خودکار';}
+    
+    // حذف ترید
+    async function deleteTrade(id){if(!confirm('این معامله حذف شود؟'))return;try{await api('DELETE',`/api/journal/${id}/delete`);_trades=_trades.filter(t=>t.id!==id);localStorage.setItem('pj_cache',JSON.stringify(_trades));toast('حذف شد');render();}catch(e){toast('⚠️ خطا: '+e.message);}}
+    function openClearAllModal(){
+        document.getElementById('clearall-confirm').value='';
+        document.getElementById('clearall-btn').disabled=true;
+        document.getElementById('clearall-btn').style.background='rgba(231,76,60,.3)';
+        document.getElementById('clearall-btn').style.color='rgba(231,76,60,.5)';
+        document.getElementById('clearall-btn').style.cursor='not-allowed';
+        document.getElementById('clearall-overlay').classList.add('open');
+    }
+    function closeClearAllModal(){ document.getElementById('clearall-overlay').classList.remove('open'); }
+    function onClearAllInput(){
+        const val=document.getElementById('clearall-confirm').value;
+        const btn=document.getElementById('clearall-btn');
+        const ok=(val==='DELETE ALL');
+        btn.disabled=!ok;
+        btn.style.background=ok?'#e74c3c':'rgba(231,76,60,.3)';
+        btn.style.color=ok?'#fff':'rgba(231,76,60,.5)';
+        btn.style.cursor=ok?'pointer':'not-allowed';
+    }
+    async function confirmClearAll(){
+        const val=document.getElementById('clearall-confirm').value;
+        if(val!=='DELETE ALL'){toast('❌ عبارت تأیید اشتباه است');return;}
+        const btn=document.getElementById('clearall-btn');
+        btn.disabled=true;btn.innerHTML='<span class="spin"></span> در حال پاک کردن...';
+        try{
+            const res=await api('DELETE','/api/journal/all');
+            if(!res.ok) throw new Error(res.error||'خطا');
+            _trades=[];
+            localStorage.removeItem('pj_cache');
+            closeClearAllModal();
+            toast('✅ همه تریدها پاک شدند');
+            render();
+        }catch(e){ toast('❌ خطا: '+e.message); btn.disabled=false; btn.innerHTML='🗑 بله، همه را پاک کن'; }
+    }
+        function openEditSlModal(tradeId){
+        const trade = _trades.find(t => t.id === tradeId);
+        if(!trade) return;
+        document.getElementById('esl-tid').value = tradeId;
+        document.getElementById('esl-sl').value = trade.sl_price || '';
+        document.getElementById('esl-tp').value = trade.tp_price || '';
+        const mul = getPipMultiplier(trade.sym);
+        const risk = trade.sl_price && trade.entry ? Math.abs(trade.entry - trade.sl_price) * mul : null;
+        const reward = trade.tp_price && trade.entry ? Math.abs(trade.tp_price - trade.entry) * mul : null;
+        const rr = (risk && reward && risk > 0) ? (reward / risk).toFixed(2) : '—';
+        document.getElementById('esl-info').innerHTML = `<span style="color:var(--text2)">SL: <b style="color:var(--red)">${trade.sl_price ? fmtPx(trade.sl_price) : '—'}</b> | TP: <b style="color:var(--green)">${trade.tp_price ? fmtPx(trade.tp_price) : '—'}</b> | R/R: <b style="color:var(--gold)">${rr}R</b></span>`;
+        document.getElementById('esl-preview').innerHTML = '';
+        document.getElementById('esl-overlay').classList.add('open');
+    }
+    function closeEditSlModal(){ document.getElementById('esl-overlay').classList.remove('open'); }
+    function previewEditSl(){
+        const tid = document.getElementById('esl-tid').value;
+        const trade = _trades.find(t => t.id === tid);
+        if(!trade) return;
+        const sl = parseFloat(document.getElementById('esl-sl').value);
+        const tp = parseFloat(document.getElementById('esl-tp').value) || trade.tp_price;
+        if(!sl){ document.getElementById('esl-preview').innerHTML = '<span style="color:var(--red)">SL را وارد کنید</span>'; return; }
+        const mul = getPipMultiplier(trade.sym);
+        const risk = Math.abs(trade.entry - sl) * mul;
+        const reward = tp ? Math.abs(tp - trade.entry) * mul : null;
+        const rr = (reward && risk > 0) ? (reward / risk).toFixed(2) : '—';
+        document.getElementById('esl-preview').innerHTML = `<div style="background:var(--bg3);border-radius:8px;padding:10px;font-size:12px;font-family:var(--mono);margin-top:8px">
+            ریسک جدید: <b style="color:var(--red)">${risk.toFixed(1)} pip (1R)</b> &nbsp;|&nbsp; R/R جدید: <b style="color:var(--gold)">${rr}R</b>
+        </div>`;
+    }
+    async function saveEditSl(){
+        const tid = document.getElementById('esl-tid').value;
+        const trade = _trades.find(t => t.id === tid);
+        if(!trade) return;
+        const sl = parseFloat(document.getElementById('esl-sl').value);
+        const tp = parseFloat(document.getElementById('esl-tp').value) || null;
+        if(!sl){ toast('❌ SL را وارد کنید'); return; }
+        try{
+            const res = await api('PUT', `/api/journal/${tid}/edit`, {
+                sl_price: sl,
+                tp_price: tp !== null ? tp : trade.tp_price
+            });
+            if(!res.ok) throw new Error(res.error || 'خطا');
+            // آپدیت فوری لوکال
+            const idx = _trades.findIndex(t => t.id === tid);
+            if(idx !== -1) _trades[idx] = res.trade;
+            localStorage.setItem('pj_cache', JSON.stringify(_trades));
+            toast('✅ SL ادیت شد — R/R به‌روز شد');
+            closeEditSlModal();
+            render();
+        }catch(e){ toast('❌ خطا: ' + e.message); }
+    }
+    
+    // ==================== ارزیابی ترید (بازنویسی شده) ====================
+    let _rv_tid = null, _rv_trade = null;
+    window._rv_state = { fr: 'no', rev: 'no', pb: '' };
+
+    function openReviewModal(tradeId) {
+        const trade = _trades.find(t => t.id === tradeId);
+        if (!trade) { console.error('[review] trade not found:', tradeId); return; }
+        _rv_tid = tradeId;
+        _rv_trade = trade;
+
+        const isWin = trade.outcome === 'win';
+        const isCryptoAsset = isCrypto(trade.sym);
+        const mul = getPipMultiplier(trade.sym);
+        const riskPips = (trade.sl_price && trade.entry)
+            ? Math.abs((trade.entry - trade.sl_price) * mul) : null;
+
+        // داده‌های خودکار
+        // liveMfe: فقط از review_mfe (پیپ) — اگه ثبت نشده، صفر
+        const hasMfePrev = trade.review_mfe !== null && trade.review_mfe !== undefined;
+        const liveMfe = hasMfePrev ? parseFloat(trade.review_mfe) : (trade.mfe_pip || 0);
+        const livePassed1r = (riskPips && liveMfe > 0) ? liveMfe >= riskPips : (trade.passed_1r || false);
+        const liveFrPossible = livePassed1r;
+        // نمایش: برای کریپتو به R، برای فارکس پیپ
+        const liveMfeDisplay = (liveMfe > 0)
+            ? (isCryptoAsset && riskPips && riskPips > 0
+                ? (liveMfe/riskPips).toFixed(2) + 'R'
+                : liveMfe.toFixed(1) + 'p')
+            : '—';
+
+        const autoItems = [
+            ['نتیجه', isWin ? '✅ برد' : '❌ باخت', isWin ? 'var(--green)' : 'var(--red)'],
+            ['MFE (review/auto)', liveMfeDisplay, 'var(--text)'],
+            ['MAE خودکار', trade.mae_pip != null ? trade.mae_pip + 'p' : '—', 'var(--text)'],
+            ['به 1R رسید؟', livePassed1r ? '✅ بله' : '❌ خیر', livePassed1r ? 'var(--green)' : 'var(--red)'],
+            ['فری‌ریسک ممکن؟', liveFrPossible ? '✅ بله' : '❌ خیر (1R نرسید)', liveFrPossible ? 'var(--green)' : 'var(--red)'],
+        ];
+        if (!isWin) {
+            autoItems.push(['MFE قبل SL', trade.mfe_before_sl_pip != null ? trade.mfe_before_sl_pip + 'p' : '—', 'var(--text)']);
+            const revLvls = [];
+            // برگشت بعد SL فقط دستی — از review_reversal نمایش داده میشه
+        }
+        const autoGridHtml = autoItems.map(([k, v, c]) =>
+            `<div style="background:var(--bg4);border-radius:7px;padding:5px 8px"><div style="font-size:10px;color:var(--text3)">${k}</div><div style="font-weight:600;color:${c};font-size:12px">${v}</div></div>`
+        ).join('');
+
+        // مقادیر قبلی — review_mfe همیشه پیپ در دیتابیسه
+        // برای کریپتو: موقع نمایش به R تبدیل کن تا کاربر R وارد کنه
+        let savedMfe, savedMae;
+        const hasMfe = trade.review_mfe !== null && trade.review_mfe !== undefined;
+        const hasMae = trade.review_mae !== null && trade.review_mae !== undefined;
+        // fallback: اگه review نداشت از mfe_pip/mae_pip سیستم استفاده کن
+        const rawMfe = hasMfe ? parseFloat(trade.review_mfe) : (trade.mfe_pip || 0);
+        const rawMae = hasMae ? parseFloat(trade.review_mae) : (trade.mae_pip || 0);
+        if (isCryptoAsset && riskPips && riskPips > 0) {
+            // کریپتو: پیپ → R برای نمایش
+            savedMfe = rawMfe > 0 ? (rawMfe / riskPips).toFixed(2) : '';
+            savedMae = rawMae > 0 ? (rawMae / riskPips).toFixed(2) : '';
+        } else {
+            // فارکس: همون پیپ
+            savedMfe = rawMfe > 0 ? rawMfe : '';
+            savedMae = rawMae > 0 ? rawMae : '';
+        }
+        if (!isWin) { savedMae = ''; }
+        const savedPb = trade.review_pullback != null ? (trade.review_pullback === true || trade.review_pullback === 'true' ? 'yes' : 'no') : '';
+        const savedFr = trade.review_free_risk_saved === true ? 'yes' : 'no';
+        const savedRev = trade.review_reversal_occurred === true ? 'yes' : 'no';
+        const savedRevFrom = trade.review_reversal_from_sl || '';
+        const savedRevTarget = trade.review_reversal_target_pips || '';
+        const savedNote = escH(trade.review_note || '');
+
+        window._rv_state = { fr: savedFr, rev: savedRev, pb: savedPb };
+
+        const frPossible = liveFrPossible;
+        const autoRevOccurred = false; const pslInfo = '';
+
+        function badge(txt) { return `<span style="font-size:10px;color:var(--text3)">${txt}</span>`; }
+        function frBtns(cur) {
+            return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="rv-fr-btns">
+                <button type="button" class="btn btn-sm ${cur==='yes'?'btn-g':''}" onclick="_rv_setFr('yes')">✅ انجام شد</button>
+                <button type="button" class="btn btn-sm ${cur==='no'?'btn-r':''}" onclick="_rv_setFr('no')">❌ انجام نشد</button>
+            </div>`;
+        }
+
+        document.getElementById('rv-modal-body').innerHTML = `
+        <input type="hidden" id="rv-tid" value="${_rv_tid}">
+        <div style="background:var(--bg3);border-radius:10px;padding:11px 13px;margin-bottom:13px">
+            <div style="font-size:10px;color:var(--text3);letter-spacing:.05em;margin-bottom:8px">📊 داده‌های خودکار سیستم — قابل ویرایش در پایین</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">${autoGridHtml}</div>
+        </div>
+        <div class="fld">
+            <label>📈 ${isWin ? 'حداکثر سود شناور' : 'MFE قبل از SL'} ${isCryptoAsset ? '(R)' : '(پیپ)'} ${liveMfeDisplay?badge('[الان: '+liveMfeDisplay+']'):''}</label>
+            <input type="number" id="rv-mfe" step="any" value="${savedMfe}" placeholder="${isCryptoAsset ? 'مثلاً 1.5 (R)' : 'مثلاً 45.2 (پیپ)'}">
+            <div class="help-text">${isCryptoAsset ? 'برای کریپتو به R وارد کن (مثلاً 1.5 = 1.5R)' : 'اگه سیستم اشتباه محاسبه کرده اینجا اصلاح کن'}</div>
+        </div>
+        ${isWin ? `<div class="fld">
+            <label>📉 حداکثر ضرر شناور قبل 1R (پیپ) ${trade.mae_pip!=null?badge('[سیستم: '+trade.mae_pip+'p]'):''}</label>
+            <input type="number" id="rv-mae" step="any" value="${savedMae}" placeholder="مثلاً 12">
+        </div>` : '<input type="hidden" id="rv-mae">'}
+        ${isWin ? `<div class="fld">
+            <label>🔄 بعد از 1R، به نقطه ورود برگشت؟ ${trade.pullback_after_1r!=null?badge('[سیستم: '+(trade.pullback_after_1r?'بله':'خیر')+']'):''}</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="rv-pb-btns">
+                <button type="button" class="btn btn-sm ${savedPb==='yes'?'btn-g':''}" onclick="_rv_setPb('yes')">✅ بله، برگشت</button>
+                <button type="button" class="btn btn-sm ${savedPb==='no'?'btn-r':''}" onclick="_rv_setPb('no')">❌ خیر، برنگشت</button>
+            </div>
+        </div>` : ''}
+        <div class="fld">
+            <label>🛡️ فری‌ریسک ${badge('[سیستم: '+(frPossible?'ممکن بود':'ممکن نبود')+']')}</label>
+            ${frBtns(savedFr)}
+            <div id="rv-fr-warn" style="display:${(!frPossible&&savedFr==='yes')?'block':'none'};margin-top:6px;padding:6px 10px;background:var(--rdim);border-radius:7px;font-size:11px;color:var(--red)">
+                ⚠️ سیستم تشخیص داده فری‌ریسک ممکن نبوده (قیمت به 1R نرسیده بود)
+            </div>
+        </div>
+        ${!isWin ? `<div class="fld">
+            <label>🔄 بعد از SL، قیمت برگشت؟ ${badge('[سیستم: '+(autoRevOccurred?'بله':'خیر')+']')}</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:5px" id="rv-rev-btns">
+                <button type="button" class="btn btn-sm ${savedRev==='yes'?'btn-g':''}" onclick="_rv_setRev('yes')">✅ بله برگشت</button>
+                <button type="button" class="btn btn-sm ${savedRev==='no'?'btn-r':''}" onclick="_rv_setRev('no')">❌ نه برنگشت</button>
+            </div>
+        </div>
+        <div id="rv-reversal-sub" style="display:${savedRev==='yes'?'block':'none'};margin-top:6px;padding-right:10px;border-right:2px solid var(--purple)">
+            <div class="frow">
+                <div class="fld"><label>📏 از SL تا برگشت (پیپ)</label><input type="number" id="rv-from-sl" step="any" value="${savedRevFrom}" placeholder="مثلاً 8"></div>
+                <div class="fld"><label>🎯 تا کجا از ورود (پیپ)</label><input type="number" id="rv-rev-target" step="any" value="${savedRevTarget}" placeholder="مثلاً 35"></div>
+            </div>
+            ${pslInfo}
+        </div>` : ''}
+        <div class="fld"><label>💬 یادداشت</label><textarea id="rv-note" rows="2">${savedNote}</textarea></div>
+        <button class="btn btn-g btn-full" onclick="rv_save()">💾 ذخیره ارزیابی</button>
+        `;
+
+        document.getElementById('review-overlay').classList.add('open');
+    }
+
+    function closeReviewModal() { document.getElementById('review-overlay').classList.remove('open'); }
+
+    function _rv_setFr(v) {
+        window._rv_state.fr = v;
+        const btns = document.getElementById('rv-fr-btns');
+        if (!btns) return;
+        btns.children[0].className = 'btn btn-sm' + (v === 'yes' ? ' btn-g' : '');
+        btns.children[1].className = 'btn btn-sm' + (v === 'no' ? ' btn-r' : '');
+        const warn = document.getElementById('rv-fr-warn');
+        if (warn) warn.style.display = (!_rv_trade.free_risk_was_possible && v === 'yes') ? 'block' : 'none';
+    }
+    function _rv_setRev(v) {
+        window._rv_state.rev = v;
+        const btns = document.getElementById('rv-rev-btns');
+        if (!btns) return;
+        btns.children[0].className = 'btn btn-sm' + (v === 'yes' ? ' btn-g' : '');
+        btns.children[1].className = 'btn btn-sm' + (v === 'no' ? ' btn-r' : '');
+        const sub = document.getElementById('rv-reversal-sub');
+        if (sub) sub.style.display = v === 'yes' ? 'block' : 'none';
+    }
+    function _rv_setPb(v) {
+        window._rv_state.pb = v;
+        const btns = document.getElementById('rv-pb-btns');
+        if (!btns) return;
+        btns.children[0].className = 'btn btn-sm' + (v === 'yes' ? ' btn-g' : '');
+        btns.children[1].className = 'btn btn-sm' + (v === 'no' ? ' btn-r' : '');
+    }
+    async function rv_save() {
+        const trade = _rv_trade;
+        if (!trade) return;
+        const isWin = trade.outcome === 'win';
+        const isCryptoAsset = isCrypto(trade.sym);
+        const mul = getPipMultiplier(trade.sym);
+        let riskPips = null;
+        if (trade.sl_price && trade.entry) riskPips = Math.abs((trade.entry - trade.sl_price) * mul);
+        const mfeRaw = parseFloat(document.getElementById('rv-mfe').value);
+        const maeRaw = isWin ? parseFloat(document.getElementById('rv-mae').value) : null;
+        const payload = {};
+        // frontend همیشه R می‌فرسته (برای کریپتو) یا پیپ (برای فارکس)
+        // سرور خودش تبدیل می‌کنه به پیپ
+        payload.review_mfe = isNaN(mfeRaw) ? null : mfeRaw;
+        payload.review_mae = (isWin && !isNaN(maeRaw)) ? maeRaw : null;
+        payload.review_pullback = isWin ? (window._rv_state.pb === 'yes') : null;
+        payload.review_free_risk_saved = (window._rv_state.fr === 'yes');
+        payload.review_note = (document.getElementById('rv-note').value || '').trim();
+        if (!isWin) {
+            payload.review_reversal_occurred = (window._rv_state.rev === 'yes');
+            payload.review_reversal_from_sl = parseFloat(document.getElementById('rv-from-sl').value) || null;
+            payload.review_reversal_target_pips = parseFloat(document.getElementById('rv-rev-target').value) || null;
+        } else {
+            payload.review_reversal_occurred = null;
+        }
+        try {
+            const res = await api('POST', `/api/journal/${_rv_tid}/review`, payload);
+            if (!res.ok) throw new Error(res.error || 'خطا');
+            // آپدیت فوری لوکال — بدون نیاز به round-trip سرور
+            if (res.trade) {
+                const idx = _trades.findIndex(t => t.id === _rv_tid);
+                if (idx !== -1) _trades[idx] = res.trade;
+                localStorage.setItem('pj_cache', JSON.stringify(_trades));
+            }
+            toast('✅ ارزیابی ذخیره شد');
+            closeReviewModal();
+            render();
+        } catch (e) { toast('❌ خطا: ' + e.message); }
+    }
+
+// ==================== ثبت دستی ====================
+    function openManualForm() {
+        _man_outcome='win'; _man_dir='BUY'; _man_pb=''; _man_fr='no'; _man_rev='no'; _man_missed=false;
+        const _mzBtn=document.getElementById('missed-zone-toggle');
+        const _mzTitle=document.getElementById('manual-modal-title');
+        if(_mzBtn){_mzBtn.style.background='var(--bg3)';_mzBtn.style.color='var(--text3)';_mzBtn.style.borderColor='rgba(255,140,0,.3)';}
+        if(_mzTitle) _mzTitle.textContent='📝 ثبت دستی ترید';
+        ['manual-sym','manual-entry','manual-exit','manual-sl','manual-tp','manual-mfe','manual-mae','manual-reversal-from','manual-reversal-target','manual-note'].forEach(id=>{
+            const el=document.getElementById(id); if(el) el.value='';
+        });
+        document.getElementById('manual-tf').value='1h';
+        manSetDir('BUY');
+        manSetOutcome('win');
+        manSetFr('no');
+        ['man-rev-yes','man-rev-no','man-pb-yes','man-pb-no'].forEach(id=>{ const el=document.getElementById(id); if(el) el.className='btn btn-sm'; });
+        document.getElementById('man-rev-sub').style.display='none';
+        const now = new Date();
+        const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,16);
+        document.getElementById('manual-entryTime').value = localNow;
+        document.getElementById('manual-exitTime').value = localNow;
+        document.getElementById('man-calc-display').textContent='— قیمت‌ها را وارد کنید';
+        document.getElementById('manual-modal').classList.add('open');
+    }
+    function closeManualModal() { document.getElementById('manual-modal').classList.remove('open'); }
+    
+    // ===== ثبت دستی — توابع کمکی =====
+    let _man_outcome = 'win', _man_dir = 'BUY', _man_pb = '', _man_fr = 'no', _man_rev = 'no';
+    let _man_missed = false;
+
+    function toggleMissedZone() {
+        _man_missed = !_man_missed;
+        const btn = document.getElementById('missed-zone-toggle');
+        const title = document.getElementById('manual-modal-title');
+        if (_man_missed) {
+            btn.style.background = 'rgba(255,140,0,.18)'; btn.style.color = '#ff8c00'; btn.style.borderColor = '#ff8c00';
+            title.textContent = '🚫 ثبت ناحیه جا مونده';
+        } else {
+            btn.style.background = 'var(--bg3)'; btn.style.color = 'var(--text3)'; btn.style.borderColor = 'rgba(255,140,0,.3)';
+            title.textContent = '📝 ثبت دستی ترید';
+        }
+    }
+
+    function manSetDir(v) {
+        _man_dir = v;
+        document.getElementById('manual-dir').value = v;
+        document.getElementById('man-buy-btn').className = 'btn btn-sm' + (v==='BUY'?' btn-g':'');
+        document.getElementById('man-sell-btn').className = 'btn btn-sm' + (v==='SELL'?' btn-r':'');
+        manUpdateCalc();
+    }
+    function manSetOutcome(v) {
+        _man_outcome = v;
+        document.getElementById('manual-outcome').value = v;
+        document.getElementById('man-win-btn').className = 'btn btn-sm' + (v==='win'?' btn-g':'');
+        document.getElementById('man-loss-btn').className = 'btn btn-sm' + (v==='loss'?' btn-r':'');
+        // نمایش فیلدهای مرتبط
+        document.getElementById('man-mae-wrap').style.display = v==='win'?'block':'none';
+        document.getElementById('man-pullback-wrap').style.display = v==='win'?'block':'none';
+        document.getElementById('man-reversal-wrap').style.display = v==='loss'?'block':'none';
+        document.getElementById('man-mfe-label').textContent = v==='win'?'📈 حداکثر سود شناور (پیپ)':'📈 MFE قبل از استاپ لاس (پیپ)';
+    }
+    function manSetPb(v) {
+        _man_pb = v;
+        document.getElementById('manual-pullback').value = v;
+        document.getElementById('man-pb-yes').className = 'btn btn-sm' + (v==='yes'?' btn-g':'');
+        document.getElementById('man-pb-no').className = 'btn btn-sm' + (v==='no'?' btn-r':'');
+    }
+    function manSetFr(v) {
+        _man_fr = v;
+        document.getElementById('manual-free-risk').value = v;
+        document.getElementById('man-fr-yes').className = 'btn btn-sm' + (v==='yes'?' btn-g':'');
+        document.getElementById('man-fr-no').className = 'btn btn-sm' + (v==='no'?' btn-r':'');
+    }
+    function manSetRev(v) {
+        _man_rev = v;
+        document.getElementById('manual-reversal').value = v;
+        document.getElementById('man-rev-yes').className = 'btn btn-sm' + (v==='yes'?' btn-g':'');
+        document.getElementById('man-rev-no').className = 'btn btn-sm' + (v==='no'?' btn-r':'');
+        document.getElementById('man-rev-sub').style.display = v==='yes'?'block':'none';
+    }
+    function manUpdateCalc() {
+        const entry = parseFloat(document.getElementById('manual-entry')?.value);
+        const sl = parseFloat(document.getElementById('manual-sl')?.value);
+        const tp = parseFloat(document.getElementById('manual-tp')?.value);
+        const exitP = parseFloat(document.getElementById('manual-exit')?.value);
+        const sym = (document.getElementById('manual-sym')?.value||'').trim().toUpperCase();
+        const dir = document.getElementById('manual-dir')?.value || 'BUY';
+        const outcome = document.getElementById('manual-outcome')?.value || 'win';
+        const isCryptoAsset = isCrypto(sym);
+        const mul = getPipMultiplier(sym);
+        const display = document.getElementById('man-calc-display');
+        if(!display) return;
+        let parts = [];
+        const rp = (entry && sl) ? Math.abs(entry-sl)*mul : null;
+        if(rp) parts.push('ریسک: ' + (isCryptoAsset ? rp.toFixed(1)+'p' : rp.toFixed(1)+'p'));
+        if(rp && tp && entry) {
+            const tp_p = Math.abs(tp-entry)*mul;
+            parts.push('R/R: ' + (tp_p/rp).toFixed(2));
+        }
+        if(rp && exitP && entry) {
+            // R گرفته با علامت — مثبت برای برد، منفی برای ضرر
+            const isBuy = dir === 'BUY';
+            const rawPip = isBuy ? (exitP-entry)*mul : (entry-exitP)*mul;
+            const takenR = rawPip / rp;
+            const color = takenR >= 0 ? 'var(--green)' : 'var(--red)';
+            const label = isCryptoAsset
+                ? (takenR >= 0 ? '+' : '') + takenR.toFixed(2) + 'R'
+                : (rawPip >= 0 ? '+' : '') + rawPip.toFixed(1) + 'p (' + (takenR >= 0?'+':'') + takenR.toFixed(2) + 'R)';
+            parts.push('<span style="color:' + color + '">' + (takenR >= 0 ? '✅' : '❌') + ' ' + label + '</span>');
+        }
+        display.innerHTML = parts.length ? parts.join(' | ') : '— قیمت‌ها را وارد کنید';
+    }
+    
+    async function submitManualTrade() {
+        const sym = document.getElementById('manual-sym').value.trim().toUpperCase();
+        const entry = parseFloat(document.getElementById('manual-entry').value);
+        const exitPrice = parseFloat(document.getElementById('manual-exit').value);
+        const sl = parseFloat(document.getElementById('manual-sl').value) || null;
+        const tp = parseFloat(document.getElementById('manual-tp').value) || null;
+        const direction = document.getElementById('manual-dir').value;
+        const outcome = document.getElementById('manual-outcome').value;
+        const tf = document.getElementById('manual-tf').value;
+        let entryTime = document.getElementById('manual-entryTime').value;
+        let exitTime = document.getElementById('manual-exitTime').value;
+        if (entryTime) entryTime = entryTime.replace('T', ' ');
+        if (exitTime) exitTime = exitTime.replace('T', ' ');
+        const note = document.getElementById('manual-note').value;
+
+        if (!sym || isNaN(entry) || isNaN(exitPrice)) {
+            toast('⚠️ نماد، ورود و خروج اجباری هستند'); return;
+        }
+
+        const isCryptoAsset = isCrypto(sym);
+        const mul = getPipMultiplier(sym);
+        let riskPips = null;
+        if (sl && entry) riskPips = Math.abs(entry - sl) * mul;
+
+        // MFE / MAE — اگه کریپتو بود به R وارد شده، تبدیل به پیپ
+        let mfe = parseFloat(document.getElementById('manual-mfe').value) || null;
+        let mae = parseFloat(document.getElementById('manual-mae').value) || null;
+        let reversalTarget = parseFloat(document.getElementById('manual-reversal-target').value) || null;
+        if (isCryptoAsset && riskPips) {
+            if (mfe != null) mfe = mfe * riskPips;
+            if (mae != null) mae = mae * riskPips;
+            if (reversalTarget != null) reversalTarget = reversalTarget * riskPips;
+        }
+
+        const payload = {
+            sym, entry, exitPrice, sl_price: sl, tp_price: tp,
+            direction, outcome, tf, entryTime, exitTime, note,
+            review_mfe: mfe,
+            review_mae: outcome === 'win' ? mae : null,
+            review_pullback: outcome === 'win' ? (_man_pb === 'yes') : null,
+            review_reversal_occurred: outcome === 'loss' ? (_man_rev === 'yes') : null,
+            review_reversal_from_sl: parseFloat(document.getElementById('manual-reversal-from').value) || null,
+            review_reversal_target_pips: reversalTarget,
+            review_free_risk_saved: (_man_fr === 'yes'),
+            is_missed_zone: _man_missed,
+        };
+
+        const saveBtn = document.querySelector('#manual-modal .btn-g');
+        if(saveBtn){saveBtn.disabled=true;saveBtn.innerHTML='<span class="spin"></span> در حال ذخیره...';}
+        try {
+            const res = await api('POST', '/api/journal/manual', payload);
+            if (!res.ok) throw new Error(res.error || 'خطا');
+            // آپدیت فوری لوکال
+            if(res.trade){
+                _trades.unshift(res.trade);
+                localStorage.setItem('pj_cache', JSON.stringify(_trades));
+            }
+            toast(_man_missed ? '🚫 ناحیه جا مونده ذخیره شد' : '✅ ترید دستی ذخیره شد');
+            closeManualModal();
+            render();
+        } catch (e) { toast('❌ ' + e.message); const sb=document.querySelector('#manual-modal .btn-g');if(sb){sb.disabled=false;sb.innerHTML='💾 ذخیره ترید دستی';} }
+    }
+    // ==================== ویرایش کامل ترید ====================
+    function openEditModal(tradeId){
+        const trade=_trades.find(t=>t.id===tradeId);
+        if(!trade)return;
+        document.getElementById('edit-tid').value=tradeId;
+        document.getElementById('edit-sym').value=trade.sym;
+        document.getElementById('edit-tf').value=trade.tf||'1h';
+        document.getElementById('edit-direction').value=trade.direction;
+        document.getElementById('edit-outcome').value=trade.outcome||'win';
+        document.getElementById('edit-entry').value=trade.entry;
+        document.getElementById('edit-exit').value=trade.exit||'';
+        document.getElementById('edit-sl').value=trade.sl_price||'';
+        document.getElementById('edit-tp').value=trade.tp_price||'';
+        if(trade.entryTime){
+            let dt = trade.entryTime.replace(' ', 'T');
+            document.getElementById('edit-entryTime').value = dt.slice(0,16);
+        } else { document.getElementById('edit-entryTime').value = ''; }
+        if(trade.exitTime){
+            let dt = trade.exitTime.replace(' ', 'T');
+            document.getElementById('edit-exitTime').value = dt.slice(0,16);
+        } else { document.getElementById('edit-exitTime').value = ''; }
+        document.getElementById('edit-note').value=trade.note||'';
+        
+        const isCryptoAsset = isCrypto(trade.sym);
+        let mfeVal = trade.review_mfe;
+        let maeVal = trade.review_mae;
+        let revTargetVal = trade.review_reversal_target_pips;
+        if(isCryptoAsset && trade.sl_price && trade.entry){
+            const mul = getPipMultiplier(trade.sym);
+            let riskPips = null;
+            if(trade.direction==='BUY') riskPips = (trade.entry - trade.sl_price) * mul;
+            else riskPips = (trade.sl_price - trade.entry) * mul;
+            if(riskPips && riskPips>0){
+                if(mfeVal) mfeVal = (mfeVal / riskPips).toFixed(2);
+                if(maeVal) maeVal = (maeVal / riskPips).toFixed(2);
+                if(revTargetVal) revTargetVal = (revTargetVal / riskPips).toFixed(2);
+            }
+        }
+        document.getElementById('edit-mfe').value = (mfeVal!==undefined && mfeVal!==null)?mfeVal:'';
+        document.getElementById('edit-mae').value = (maeVal!==undefined && maeVal!==null)?maeVal:'';
+        document.getElementById('edit-pullback').value = (trade.review_pullback===true)?'yes':(trade.review_pullback===false?'no':'');
+        const revChk = document.getElementById('edit-reversal');
+        revChk.checked = trade.review_reversal_occurred===true;
+        document.getElementById('edit-reversal-fields').style.display = revChk.checked ? 'block' : 'none';
+        document.getElementById('edit-reversal-from').value = trade.review_reversal_from_sl || '';
+        document.getElementById('edit-reversal-target').value = (revTargetVal!==undefined && revTargetVal!==null)?revTargetVal:'';
+        document.getElementById('edit-free-risk').checked = trade.review_free_risk_saved===true;
+        
+        document.getElementById('edit-overlay').classList.add('open');
+    }
+    function closeEditModal(){document.getElementById('edit-overlay').classList.remove('open');}
+    document.getElementById('edit-reversal').addEventListener('change', function() {
+        document.getElementById('edit-reversal-fields').style.display = this.checked ? 'block' : 'none';
+    });
+    async function saveFullEdit(){
+        const tid=document.getElementById('edit-tid').value;
+        const tradeOld = _trades.find(t=>t.id===tid);
+        if(!tradeOld) return;
+        const isCryptoAsset = isCrypto(document.getElementById('edit-sym').value);
+        
+        let entryTime = document.getElementById('edit-entryTime').value;
+        let exitTime = document.getElementById('edit-exitTime').value;
+        if(entryTime) entryTime = entryTime.replace('T', ' ');
+        if(exitTime) exitTime = exitTime.replace('T', ' ');
+        
+        const payload = {
+            sym: document.getElementById('edit-sym').value.toUpperCase(),
+            direction: document.getElementById('edit-direction').value,
+            size: 1.0,
+            tf: document.getElementById('edit-tf').value,
+            entry: parseFloat(document.getElementById('edit-entry').value),
+            exit: parseFloat(document.getElementById('edit-exit').value) || null,
+            sl_price: parseFloat(document.getElementById('edit-sl').value) || null,
+            tp_price: parseFloat(document.getElementById('edit-tp').value) || null,
+            entryTime: entryTime,
+            exitTime: exitTime,
+            outcome: document.getElementById('edit-outcome').value,
+            note: document.getElementById('edit-note').value,
+            review_pullback: document.getElementById('edit-pullback').value === 'yes',
+            review_reversal_occurred: document.getElementById('edit-reversal').checked,
+            review_reversal_from_sl: parseFloat(document.getElementById('edit-reversal-from').value) || null,
+            review_free_risk_saved: document.getElementById('edit-free-risk').checked,
+            review_note: ''
+        };
+        
+        let mfeVal = document.getElementById('edit-mfe').value;
+        let maeVal = document.getElementById('edit-mae').value;
+        let revTargetVal = document.getElementById('edit-reversal-target').value;
+        
+        if(isCryptoAsset){
+            payload.review_mfe_r = mfeVal ? parseFloat(mfeVal) : null;
+            payload.review_mae_r = maeVal ? parseFloat(maeVal) : null;
+            payload.review_reversal_target_pips_r = revTargetVal ? parseFloat(revTargetVal) : null;
+        } else {
+            payload.review_mfe = mfeVal ? parseFloat(mfeVal) : null;
+            payload.review_mae = maeVal ? parseFloat(maeVal) : null;
+            payload.review_reversal_target_pips = revTargetVal ? parseFloat(revTargetVal) : null;
+        }
+        
+        try{
+            const res = await api('PUT',`/api/journal/${tid}/edit`,payload);
+            if(!res.ok) throw new Error(res.error || 'خطا');
+            // آپدیت فوری لوکال
+            if(res.trade){
+                const idx = _trades.findIndex(t => t.id === tid);
+                if(idx !== -1) _trades[idx] = res.trade;
+                localStorage.setItem('pj_cache', JSON.stringify(_trades));
+            }
+            toast('✅ ترید ویرایش شد');
+            closeEditModal();
+            render();
+        }catch(e){ toast('❌ خطا: '+e.message); }
+    }
+    
+    // ==================== چارت حرفه‌ای (Lightweight Charts) ====================
+    let _lwcChart = null, _lwcSeries = null;
+
+    function _destroyLwc() {
+        if (_lwcChart) { try { _lwcChart.remove(); } catch(e){} _lwcChart = null; _lwcSeries = null; }
+    }
+
+    async function showChart(tradeId){
+        // نمایش لودر
+        const loader = document.getElementById('chart-loader');
+        const lwcEl  = document.getElementById('lwc-chart');
+        const legend = document.getElementById('chart-legend');
+        if(loader) loader.style.display = 'flex';
+        if(lwcEl)  lwcEl.innerHTML = '';
+        if(legend) legend.style.display = 'none';
+        _destroyLwc();
+        document.getElementById('chart-overlay').classList.add('open');
+
+        try {
+            const res = await fetch(`/api/chart/${tradeId}`);
+            const d = await res.json();
+            if(!d.ok) throw new Error(d.error || 'خطا');
+
+            const trade = _trades.find(t=>t.id===tradeId);
+            const titleEl = document.getElementById('chart-title');
+            if(titleEl){
+                const snap = trade?.candle_snapshot?.length;
+                const isOpen = trade?.status==='open'||trade?.pending_check;
+                if(snap && !isOpen)
+                    titleEl.innerHTML=`📊 چارت کندلی <span style="font-size:10px;font-family:var(--mono);color:var(--green);border:1px solid rgba(0,217,139,.3);padding:2px 7px;border-radius:5px;margin-right:6px">💾 ${snap} کندل ذخیره</span>`;
+                else if(isOpen)
+                    titleEl.innerHTML=`🔴 چارت Live <span style="font-size:10px;font-family:var(--mono);color:var(--gold);border:1px solid rgba(240,165,0,.3);padding:2px 7px;border-radius:5px;margin-right:6px;animation:pulse-badge 2s infinite">در جریان</span>`;
+                else titleEl.textContent='📊 چارت کندلی';
+            }
+            document.getElementById('chart-info').innerHTML=`
+                <span>📍 ${fmtPx(d.entry)}</span>
+                ${d.sl?`<span style="color:var(--red)">🛑 SL ${fmtPx(d.sl)}</span>`:''}
+                ${d.tp?`<span style="color:var(--green)">🎯 TP ${fmtPx(d.tp)}</span>`:''}
+                ${d.risk_pips?`<span>${d.risk_pips}pip risk</span>`:''}
+                <span style="color:var(--text3)">${d.candles.length} کندل</span>`;
+
+            if(loader) loader.style.display = 'none';
+            renderLwcChart(lwcEl, d);
+        } catch(e) {
+            if(loader) loader.style.display = 'none';
+            if(lwcEl) lwcEl.innerHTML=`<div class="empty" style="padding:3rem 1rem"><div class="empty-ico">⚠️</div><p style="color:var(--red)">${escH(e.message)}</p></div>`;
+        }
+    }
+
+    function _candleTimestamp(t) {
+        // t مثل "2024-05-10 14:00" یا "2024-05-10T14:00:00"
+        const s = t.replace(' ','T');
+        return Math.floor(new Date(s).getTime() / 1000);
+    }
+
+    function renderLwcChart(container, d) {
+        if (!window.LightweightCharts) {
+            container.innerHTML='<div class="empty"><p style="color:var(--red)">Lightweight Charts بارگذاری نشد</p></div>';
+            return;
+        }
+        const isLight = document.body.classList.contains('light');
+        const bg      = isLight ? '#e8edf5' : '#030508';
+        const grid    = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.035)';
+        const textC   = isLight ? '#2d3748' : '#9aafc5';
+        const borderC = isLight ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.07)';
+
+        const W = container.clientWidth || 900;
+        const H = container.clientHeight || 500;
+
+        _lwcChart = LightweightCharts.createChart(container, {
+            width: W, height: H,
+            layout: {
+                background: { color: bg },
+                textColor: textC,
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: grid, style: 1 },
+                horzLines: { color: grid, style: 1 },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#7040c0', labelBackgroundColor: '#5e3daa', width: 1, style: 0 },
+                horzLine: { color: '#7040c0', labelBackgroundColor: '#5e3daa', width: 1, style: 0 },
+            },
+            rightPriceScale: {
+                borderColor: borderC, textColor: textC,
+                scaleMargins: { top: 0.12, bottom: 0.12 },
+            },
+            timeScale: {
+                borderColor: borderC, timeVisible: true, secondsVisible: false,
+                rightOffset: 10, fixLeftEdge: true, barSpacing: 12,
+            },
+            handleScroll: true,
+            handleScale: true,
+        });
+
+        const candles = d.candles || [];
+        const WIN  = '#00e676';
+        const LOSS = '#ff1744';
+
+        const beforeData = [], tradeData = [], hitData = [];
+        candles.forEach(c => {
+            const bar = { time: _candleTimestamp(c.t), open: c.o, high: c.h, low: c.l, close: c.c };
+            if (c.phase === 'before')   beforeData.push(bar);
+            else if (c.phase === 'hit') hitData.push(bar);
+            else                         tradeData.push(bar);
+        });
+
+        // کندل‌های قبل از ورود — بسیار کدر
+        if (beforeData.length) {
+            _lwcChart.addCandlestickSeries({
+                upColor: '#182436', downColor: '#182436',
+                borderUpColor: '#243548', borderDownColor: '#243548',
+                wickUpColor: '#182436', wickDownColor: '#182436',
+                priceLineVisible: false, lastValueVisible: false,
+            }).setData(beforeData);
+        }
+
+        // کندل‌های اصلی ترید — پر رنگ و واضح
+        _lwcSeries = _lwcChart.addCandlestickSeries({
+            upColor: WIN, downColor: LOSS,
+            borderUpColor: WIN, borderDownColor: LOSS,
+            wickUpColor: WIN, wickDownColor: LOSS,
+            priceLineVisible: false, lastValueVisible: false,
+        });
+        if (tradeData.length) _lwcSeries.setData(tradeData);
+
+        // کندل خروج — هایلایت شده
+        if (hitData.length) {
+            const hC   = d.outcome === 'win' ? '#69ffb0' : '#ff6688';
+            _lwcChart.addCandlestickSeries({
+                upColor: hC, downColor: hC,
+                borderUpColor: hC, borderDownColor: hC,
+                wickUpColor: hC, wickDownColor: hC,
+                priceLineVisible: false, lastValueVisible: false,
+            }).setData(hitData);
+        }
+
+        // Zone قرمز SL
+        if (d.sl && d.entry && candles.length >= 2) {
+            const t0 = _candleTimestamp(candles[0].t);
+            const t1 = _candleTimestamp(candles[candles.length - 1].t);
+            _lwcChart.addBaselineSeries({
+                baseValue: { type: 'price', price: Math.min(d.sl, d.entry) },
+                topLineColor: 'transparent', topFillColor1: 'rgba(255,23,68,0.25)', topFillColor2: 'rgba(255,23,68,0.25)',
+                bottomLineColor: 'transparent', bottomFillColor1: 'transparent', bottomFillColor2: 'transparent',
+                lineWidth: 0, crosshairMarkerVisible: false,
+                priceLineVisible: false, lastValueVisible: false, axisLabelVisible: false,
+            }).setData([{ time: t0, value: Math.max(d.sl, d.entry) }, { time: t1, value: Math.max(d.sl, d.entry) }]);
+        }
+
+        // Zone سبز TP
+        const tpTarget = d.tp || d.reward_levels?.r3 || d.reward_levels?.r2 || d.reward_levels?.r1;
+        if (tpTarget && d.entry && candles.length >= 2) {
+            const t0 = _candleTimestamp(candles[0].t);
+            const t1 = _candleTimestamp(candles[candles.length - 1].t);
+            _lwcChart.addBaselineSeries({
+                baseValue: { type: 'price', price: Math.min(tpTarget, d.entry) },
+                topLineColor: 'transparent', topFillColor1: 'rgba(0,230,118,0.18)', topFillColor2: 'rgba(0,230,118,0.18)',
+                bottomLineColor: 'transparent', bottomFillColor1: 'transparent', bottomFillColor2: 'transparent',
+                lineWidth: 0, crosshairMarkerVisible: false,
+                priceLineVisible: false, lastValueVisible: false, axisLabelVisible: false,
+            }).setData([{ time: t0, value: Math.max(tpTarget, d.entry) }, { time: t1, value: Math.max(tpTarget, d.entry) }]);
+        }
+
+        // خطوط قیمتی
+        function addPriceLine(price, color, title, style, width) {
+            if (!price || !_lwcSeries) return;
+            _lwcSeries.createPriceLine({ price, color, lineWidth: width ?? 2, lineStyle: style ?? LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title });
+        }
+        addPriceLine(d.sl,    '#ff1744', '✕ SL',  LightweightCharts.LineStyle.LargeDashed, 2);
+        addPriceLine(d.tp,    '#00e676', '✓ TP',  LightweightCharts.LineStyle.LargeDashed, 2);
+        if (d.reward_levels) {
+            addPriceLine(d.reward_levels.r1, 'rgba(0,230,118,0.80)', '1R', LightweightCharts.LineStyle.Dotted, 1);
+            addPriceLine(d.reward_levels.r2, 'rgba(0,230,118,0.95)', '2R', LightweightCharts.LineStyle.Dotted, 1);
+            addPriceLine(d.reward_levels.r3, '#29b6f6',              '3R', LightweightCharts.LineStyle.Dotted, 2);
+        }
+
+        // Markers
+        const markers = [];
+        const entryIdx = d.entry_candle_idx ?? candles.findIndex(c => c.phase !== 'before');
+        if (entryIdx >= 0 && candles[entryIdx]) {
+            markers.push({ time: _candleTimestamp(candles[entryIdx].t), position: 'aboveBar', color: '#bf80ff', shape: 'arrowDown', text: 'ورود  ' + fmtPx(d.entry) });
+        }
+        const exitBar = hitData.length ? hitData[hitData.length - 1] : tradeData.length ? tradeData[tradeData.length - 1] : null;
+        if (exitBar && d.exit_px) {
+            const eC = d.outcome === 'win' ? WIN : LOSS;
+            markers.push({ time: exitBar.time, position: d.outcome === 'win' ? 'aboveBar' : 'belowBar', color: eC, shape: d.outcome === 'win' ? 'arrowUp' : 'arrowDown', text: (d.outcome === 'win' ? 'TP  ' : 'SL  ') + fmtPx(d.exit_px) });
+        }
+        if (markers.length && _lwcSeries) _lwcSeries.setMarkers(markers);
+
+        // ─── خط عمودی ورود (LineSeries با یه segment در timestamp ورود) ───
+        // LWC اجازه timestamp تکراری نمی‌ده، ولی می‌شه یه line series
+        // با فقط یه نقطه ساخت که روی axis هم label نشون بده
+        if (entryIdx >= 0 && candles[entryIdx]) {
+            const entryTs  = _candleTimestamp(candles[entryIdx].t);
+            const entryDate = candles[entryIdx].t;
+
+            // خط عمودی: یه LineSeries با نقاط قبل/بعد از ورود — مقدار ثابت entry
+            // این خط افقی نیست، entry priceline هست — خط عمودی واقعی با overlay:
+            const vLineEl = document.createElement('div');
+            vLineEl.id = 'entry-vline-label';
+            vLineEl.style.cssText = [
+                'position:absolute',
+                'bottom:32px',
+                'left:50%',
+                'transform:translateX(-50%)',
+                'pointer-events:none',
+                'z-index:9',
+                'background:rgba(10,8,20,0.85)',
+                'border:1px solid rgba(191,128,255,0.6)',
+                'border-radius:6px',
+                'padding:3px 12px',
+                'font-family:"IBM Plex Mono",monospace',
+                'font-size:10px',
+                'color:#bf80ff',
+                'letter-spacing:.04em',
+                'white-space:nowrap',
+            ].join(';');
+            vLineEl.textContent = '⬥ ورود: ' + entryDate;
+            container.appendChild(vLineEl);
+
+            // ─ خط عمودی واقعی: رسم روی canvas با timeScale coordinate
+            // بعد از render کامل، محل x کندل ورود رو پیدا می‌کنیم و یه خط می‌کشیم
+            setTimeout(() => {
+                try {
+                    const ts = _lwcChart.timeScale();
+                    const xCoord = ts.timeToCoordinate(entryTs);
+                    if (xCoord === null) return;
+                    // پیدا کردن canvas داخل container
+                    const canvas = container.querySelector('canvas');
+                    if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    const dpr = window.devicePixelRatio || 1;
+                    // رسم خط عمودی
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(191,128,255,0.45)';
+                    ctx.lineWidth   = 1 * dpr;
+                    ctx.setLineDash([4 * dpr, 3 * dpr]);
+                    ctx.beginPath();
+                    ctx.moveTo(xCoord * dpr, 0);
+                    ctx.lineTo(xCoord * dpr, canvas.height);
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // label زیر خط — موقعیت label رو به x کندل ورود ببر
+                    if (vLineEl) {
+                        vLineEl.style.left  = xCoord + 'px';
+                        vLineEl.style.transform = 'translateX(-50%)';
+                    }
+                } catch(e){}
+            }, 80);
+        }
+
+        // Legend hover
+        const legend = document.getElementById('chart-legend');
+        _lwcChart.subscribeCrosshairMove(param => {
+            if (!legend) return;
+            if (!param || !param.time) { legend.style.display = 'none'; return; }
+            let bar = null;
+            if (param.seriesData instanceof Map) { param.seriesData.forEach(v => { if (v && v.open !== undefined) bar = v; }); }
+            else if (param.seriesData) { Object.values(param.seriesData).forEach(v => { if (v && v.open !== undefined) bar = v; }); }
+            if (!bar) { legend.style.display = 'none'; return; }
+            legend.style.display = 'block';
+            const t = new Date(param.time * 1000);
+            document.getElementById('cl-time').textContent = t.toISOString().slice(0, 16).replace('T', ' ');
+            document.getElementById('cl-o').textContent = fmtPx(bar.open);
+            document.getElementById('cl-h').textContent = fmtPx(bar.high);
+            document.getElementById('cl-l').textContent = fmtPx(bar.low);
+            document.getElementById('cl-c').textContent = fmtPx(bar.close);
+            document.getElementById('cl-c').style.color = bar.close >= bar.open ? WIN : LOSS;
+            const chg = bar.open ? ((bar.close - bar.open) / bar.open * 100).toFixed(3) : 0;
+            const chgEl = document.getElementById('cl-chg');
+            chgEl.textContent = (chg >= 0 ? ' ▲ +' : ' ▼ ') + chg + '%';
+            chgEl.style.color = chg >= 0 ? WIN : LOSS;
+        });
+
+        // Resize
+        const ro = new ResizeObserver(entries => {
+            if (!_lwcChart) return;
+            for (const e of entries) { _lwcChart.resize(e.contentRect.width, Math.max(e.contentRect.height, 200)); }
+        });
+        ro.observe(container);
+    }
+
+    // [Canvas renderCandleChart removed — replaced by renderLwcChart above]
+    function renderCandleChart_UNUSED(container, d) {
+        container.innerHTML = `<canvas id="trade-chart" style="width:100%;display:block"></canvas>`;
+        const canvas = document.getElementById('trade-chart');
+        const dpr = window.devicePixelRatio || 1;
+        const W = container.clientWidth || 700;
+        const H = 420;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const candles = d.candles;
+        const n = candles.length;
+        if(!n) { ctx.fillStyle='#ff4560'; ctx.fillText('کندلی یافت نشد',W/2,H/2); return; }
+
+        // --- محاسبه min/max ---
+        let yMin = Infinity, yMax = -Infinity;
+        candles.forEach(c => { yMin=Math.min(yMin,c.l); yMax=Math.max(yMax,c.h); });
+        // اضافه کردن سطوح به range
+        const levels = [d.entry, d.sl, d.tp, d.exit_px, ...(d.reward_levels?Object.values(d.reward_levels):[])].filter(Boolean);
+        levels.forEach(v => { yMin=Math.min(yMin,v); yMax=Math.max(yMax,v); });
+        const pad = (yMax-yMin)*0.12;
+        yMin -= pad; yMax += pad;
+
+        const PAD_L=8, PAD_R=90, PAD_T=18, PAD_B=36;
+        const cW = W - PAD_L - PAD_R;
+        const cH = H - PAD_T - PAD_B;
+        const barW = Math.max(3, Math.min(18, Math.floor(cW / n * 0.72)));
+        const barGap = cW / n;
+
+        function toX(i) { return PAD_L + i * barGap + barGap/2; }
+        function toY(v) { return PAD_T + cH * (1 - (v - yMin) / (yMax - yMin)); }
+
+        // --- پس‌زمینه ---
+        ctx.fillStyle = '#0c0f14';
+        ctx.fillRect(0, 0, W, H);
+
+        // --- grid خطوط افقی ---
+        const nGridY = 5;
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 1;
+        for(let i=0; i<=nGridY; i++){
+            const y = PAD_T + cH*i/nGridY;
+            ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(W-PAD_R+10,y); ctx.stroke();
+        }
+        // grid عمودی (هر 5 کندل)
+        for(let i=0; i<n; i+=Math.max(1,Math.floor(n/8))){
+            const x = toX(i);
+            ctx.beginPath(); ctx.moveTo(x,PAD_T); ctx.lineTo(x,PAD_T+cH); ctx.stroke();
+        }
+
+        // --- زون‌های رنگی R ---
+        function fillZone(y0, y1, color){
+            if(y0===y1) return;
+            const top = Math.min(toY(y0),toY(y1));
+            const bot = Math.max(toY(y0),toY(y1));
+            ctx.fillStyle = color;
+            ctx.fillRect(PAD_L, top, cW, bot-top);
+        }
+        if(d.reward_levels && d.entry){
+            const rl = d.reward_levels;
+            if(d.sl) fillZone(Math.min(d.sl,d.entry), Math.max(d.sl,d.entry), 'rgba(255,69,96,0.09)');
+            if(rl.r1) fillZone(d.entry, rl.r1, 'rgba(0,217,139,0.09)');
+            if(rl.r1&&rl.r2) fillZone(rl.r1, rl.r2, 'rgba(0,217,139,0.15)');
+            if(rl.r2&&rl.r3) fillZone(rl.r2, rl.r3, 'rgba(77,168,255,0.12)');
+        }
+
+        // --- خطوط قیمتی با برچسب ---
+        function drawHLine(price, color, dash, label, labelColor){
+            if(!price) return;
+            const y = toY(price);
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1.2;
+            if(dash) ctx.setLineDash(dash);
+            ctx.beginPath(); ctx.moveTo(PAD_L,y); ctx.lineTo(W-PAD_R+8,y); ctx.stroke();
+            ctx.setLineDash([]);
+            // برچسب
+            ctx.fillStyle = labelColor||color;
+            ctx.font = '9px IBM Plex Mono, monospace';
+            ctx.textAlign = 'left';
+            ctx.fillText(label, W-PAD_R+10, y+3);
+            ctx.restore();
+        }
+        // entry خط عمودی — از سرور میاد
+        const entryCandle = d.entry_candle_idx ?? candles.findIndex(c => c.phase !== 'before');
+        if(entryCandle >= 0){
+            const ex = toX(entryCandle);
+            ctx.save();
+            ctx.strokeStyle = 'rgba(160,112,255,0.35)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4,4]);
+            ctx.beginPath(); ctx.moveTo(ex,PAD_T); ctx.lineTo(ex,PAD_T+cH); ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
+        if(d.sl) drawHLine(d.sl, '#ff4560', [3,3], `SL ${fmtPx(d.sl)}`);
+        if(d.tp) drawHLine(d.tp, '#00d98b', [3,3], `TP ${fmtPx(d.tp)}`);
+        if(d.reward_levels?.r1) drawHLine(d.reward_levels.r1, '#88ff88', [2,4], `1R`);
+        if(d.reward_levels?.r2) drawHLine(d.reward_levels.r2, '#00e88b', [2,4], `2R`);
+        if(d.reward_levels?.r3) drawHLine(d.reward_levels.r3, '#4da8ff', [2,4], `3R`);
+        drawHLine(d.entry, '#a070ff', [6,3], `Entry ${fmtPx(d.entry)}`);
+
+        // --- کندل‌ها ---
+        candles.forEach((c, i) => {
+            const x = toX(i);
+            const oY = toY(c.o), cY = toY(c.c), hY = toY(c.h), lY = toY(c.l);
+            const isBefore = c.phase === 'before';
+            const isHit = c.phase === 'hit';
+            const isUp = c.c >= c.o;
+
+            let incColor, decColor, wickColor;
+            if(isBefore){
+                incColor = '#3d4a5c'; decColor = '#3d4a5c'; wickColor = '#2d3845';
+            } else if(isHit){
+                incColor = d.outcome==='win' ? '#00d98b' : '#ff4560';
+                decColor = d.outcome==='win' ? '#00a86b' : '#cc2040';
+                wickColor = d.outcome==='win' ? '#00d98b' : '#ff4560';
+            } else {
+                incColor = '#00d98b'; decColor = '#ff4560'; wickColor = isUp?'#00d98b':'#ff4560';
+            }
+
+            const color = isUp ? incColor : decColor;
+            // wick
+            ctx.strokeStyle = wickColor;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, hY); ctx.lineTo(x, Math.min(oY,cY));
+            ctx.moveTo(x, Math.max(oY,cY)); ctx.lineTo(x, lY);
+            ctx.stroke();
+            // body
+            const bodyTop = Math.min(oY, cY);
+            const bodyH = Math.max(1, Math.abs(cY - oY));
+            ctx.fillStyle = color;
+            ctx.fillRect(x - barW/2, bodyTop, barW, bodyH);
+        });
+
+        // --- علامت خروج ---
+        if(d.exit_px && d.candles.length){
+            const lastC = candles[candles.length-1];
+            const ex = toX(candles.length-1);
+            const ey = toY(d.exit_px);
+            const color = d.outcome==='win'?'#00d98b':'#ff4560';
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            if(d.outcome==='win'){
+                ctx.moveTo(ex, ey-9); ctx.lineTo(ex-7, ey+4); ctx.lineTo(ex+7, ey+4);
+            } else {
+                ctx.moveTo(ex, ey+9); ctx.lineTo(ex-7, ey-4); ctx.lineTo(ex+7, ey-4);
+            }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.restore();
+        }
+
+        // --- برچسب‌های محور X ---
+        ctx.fillStyle = '#3d4a5c';
+        ctx.font = '8px IBM Plex Mono, monospace';
+        ctx.textAlign = 'center';
+        const step = Math.max(1, Math.floor(n/7));
+        for(let i=0; i<n; i+=step){
+            const t = candles[i].t;
+            const label = t.slice(5,10)+' '+t.slice(11,16);
+            ctx.fillText(label, toX(i), H-PAD_B+14);
+        }
+
+        // --- برچسب‌های محور Y ---
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#3d4a5c';
+        for(let i=0; i<=nGridY; i++){
+            const v = yMin + (yMax-yMin)*(1-i/nGridY);
+            ctx.fillText(fmtPx(v), W-PAD_R+6, PAD_T+cH*i/nGridY+3);
+        }
+
+        // --- tooltip hover ---
+        let _hover = -1;
+        canvas.onmousemove = function(e){
+            const rect = canvas.getBoundingClientRect();
+            const mx = (e.clientX - rect.left);
+            let closest = -1, minD = Infinity;
+            for(let i=0; i<n; i++){
+                const d2 = Math.abs(toX(i)-mx);
+                if(d2<minD){ minD=d2; closest=i; }
+            }
+            if(closest !== _hover){
+                _hover = closest;
+                // redraw
+                renderCandleChart(container, d);
+                if(closest>=0){
+                    const c = candles[closest];
+                    const cx2 = toX(closest);
+                    const tooltip_x = cx2 > W-180 ? cx2-160 : cx2+10;
+                    const ctx2 = document.getElementById('trade-chart').getContext('2d');
+                    ctx2.scale(dpr, dpr);
+                    ctx2.fillStyle = 'rgba(18,23,32,0.95)';
+                    ctx2.strokeStyle = 'rgba(255,255,255,0.1)';
+                    ctx2.lineWidth = 1;
+                    const ty = Math.max(PAD_T, Math.min(PAD_T+cH-70, toY((c.h+c.l)/2)-35));
+                    ctx2.beginPath();
+                    ctx2.roundRect(tooltip_x, ty, 150, 70, 6);
+                    ctx2.fill(); ctx2.stroke();
+                    ctx2.fillStyle='#7a8799'; ctx2.font='8px IBM Plex Mono,monospace'; ctx2.textAlign='left';
+                    ctx2.fillText(c.t, tooltip_x+8, ty+14);
+                    ctx2.fillStyle='#dce4f0';
+                    ctx2.fillText(`O: ${fmtPx(c.o)}  C: ${fmtPx(c.c)}`, tooltip_x+8, ty+28);
+                    ctx2.fillText(`H: ${fmtPx(c.h)}  L: ${fmtPx(c.l)}`, tooltip_x+8, ty+42);
+                    const isUp = c.c>=c.o;
+                    ctx2.fillStyle = isUp?'#00d98b':'#ff4560';
+                    const chg = ((c.c-c.o)/c.o*100).toFixed(2);
+                    ctx2.fillText(`${isUp?'▲':'▼'} ${chg}%`, tooltip_x+8, ty+58);
+                }
+            }
+        };
+        canvas.onmouseleave = function(){ _hover=-1; renderCandleChart(container,d); };
+    }
+
+    // وقتی چارت بسته میشه، اگه از popup اومده بود دوباره popup رو باز کن
+    let _lastPopupState = null;
+
+    function closeChartOv(){
+        _destroyLwc();
+        const legend = document.getElementById('chart-legend');
+        if(legend) legend.style.display='none';
+        document.getElementById('chart-overlay').classList.remove('open');
+        if(_lastPopupState) {
+            const {trades, title, color, page} = _lastPopupState;
+            setTimeout(() => _showTradePopup(trades, title, color, page), 50);
+        }
+    }
+    function setTab(f,el){_tab=f;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');render(true);}
+    function setWeekFilter(v){_weekFilter=v;_currentPage=1;render();}
+    function onSymSearch(){ _symSearch=(document.getElementById('sym-search')?.value||'').trim().toUpperCase();_currentPage=1;render(); }
+    function onDateFilter(){ _dateFrom=document.getElementById('date-from')?.value||'';_dateTo=document.getElementById('date-to')?.value||'';_currentPage=1;render(); }
+    function clearDateFilter(){ _dateFrom='';_dateTo='';_symSearch='';const df=document.getElementById('date-from');const dt=document.getElementById('date-to');const ss=document.getElementById('sym-search');if(df)df.value='';if(dt)dt.value='';if(ss)ss.value='';_currentPage=1;render(); }
+    function populateWeekFilter(){}
+    function goPage(p){const closed=_trades.filter(t=>t.status==='closed');const list=_tab==='closed'?closed:_trades;const total=Math.ceil(list.length/TRADES_PER_PAGE);if(p<1||p>total)return;_currentPage=p;render();}
+    function showTab(tab){if(tab==='trades'){document.getElementById('trades-panel').style.display='block';document.getElementById('overall-panel').style.display='none';document.getElementById('tab-trades').classList.add('on');document.getElementById('tab-overall').classList.remove('on');}else{document.getElementById('trades-panel').style.display='none';document.getElementById('overall-panel').style.display='block';document.getElementById('tab-trades').classList.remove('on');document.getElementById('tab-overall').classList.add('on');}}
+    // ===== فیلتر حالت AI =====
+    let _aiMode = 'all';
+    function setAiMode(mode, btn) {
+        _aiMode = mode;
+        ['ai-mode-all','ai-mode-trades','ai-mode-zones'].forEach(id=>{
+            const el=document.getElementById(id); if(el) el.classList.remove('btn-pu');
+        });
+        if(btn) btn.classList.add('btn-pu');
+        const info={'all':'همه تریدها و نواحی جا مونده','trades_only':'فقط تریدهای واقعی — نواحی حذف','zones_only':'فقط نواحی جا مونده — ببین اگه می‌گرفتی چی میشد'};
+        const el=document.getElementById('ai-mode-info'); if(el) el.textContent=info[mode]||'';
+    }
+
+    // ===== فیلتر نماد AI =====
+    function populateAiSymFilter() {
+        const sel=document.getElementById('ai-sym-filter'); if(!sel) return;
+        const closed=_trades.filter(t=>t.status==='closed'||t.status==='watching').filter(t=>t.outcome==='win'||t.outcome==='loss');
+        const syms=[...new Set(closed.map(t=>t.sym).filter(Boolean))].sort();
+        const prev=sel.value;
+        sel.innerHTML='<option value="">📊 همه نمادها ('+closed.length+' ترید)</option>';
+        syms.forEach(s=>{
+            const cnt=closed.filter(t=>t.sym===s).length;
+            const opt=document.createElement('option'); opt.value=s; opt.textContent=s+' ('+cnt+')'; sel.appendChild(opt);
+        });
+        if(prev) sel.value=prev;
+        onAiSymFilterChange();
+    }
+    function onAiSymFilterChange() {
+        const sym=document.getElementById('ai-sym-filter')?.value||'';
+        const infoEl=document.getElementById('ai-sym-info');
+        const cntEl=document.getElementById('ai-sym-count');
+        if(!sym){if(infoEl)infoEl.style.display='none';if(cntEl)cntEl.textContent='';return;}
+        const closed=_trades.filter(t=>(t.status==='closed'||t.status==='watching')&&(t.outcome==='win'||t.outcome==='loss')&&t.sym===sym);
+        const wins=closed.filter(t=>t.outcome==='win').length;
+        const wr=closed.length?Math.round(wins/closed.length*100):0;
+        if(cntEl) cntEl.textContent=closed.length+' ترید';
+        if(infoEl){infoEl.style.display='block';infoEl.textContent=sym+' — '+closed.length+' ترید | برد:'+wins+' | نرخ:'+wr+'%';}
+    }
+
+    const PRESETS={
+        full:'تو یک تحلیلگر حرفه‌ای ترید هستی. گزارش فارسی کامل بنویس:\n1. آمار کلی\n2. سطوح ریوارد (1R/2R/3R)\n3. مشکل استاپ + SL برگشت\n4. فری‌ریسک: مفید بود؟\n5. تارگت: تارگت بهینه پیشنهاد بده\n6. R/R واقعی vs برنامه\n7. ستاپ‌ها: کدام بهتر؟\n8. بهترین نماد و ساعت\n9. نمره از 10',
+        sl:'فقط روی مشکل استاپ لاس تمرکز کن:\n- چند ترید SL خورد و بعد برگشت؟\n- میانگین پیپ برگشت چقدر بود؟\n- SL خیلی تنگ است؟\n- پیشنهاد: چند پیپ عریض‌تر کنیم؟',
+        fr:'فقط روی فری‌ریسک تمرکز کن:\n- چند بار ممکن بود ولی نگذاشتیم؟\n- آیا فری‌ریسک در این سیستم مفید است؟\n- پیشنهاد: کِی فری‌ریسک بگذاریم؟',
+        target:'فقط روی تارگت تمرکز کن:\n- میانگین MFE چقدر؟ چقدر گرفتیم؟\n- تارگت بهینه دقیق (R) پیشنهاد بده\n- اگر تارگت را تغییر می‌دادیم، P&L چقدر بیشتر می‌شد؟',
+        rr:'روی R/R و ستاپ‌ها تمرکز کن:\n- میانگین R/R برنامه vs واقعی\n- در کدام R/R بهترین نرخ برد داریم؟\n- کدام ستاپ بهترین و بدترین عملکرد دارد؟',
+        timing:'روی ساعت ورود و نماد تمرکز کن:\n- بهترین و بدترین ساعت\n- بهترین و بدترین نماد\n- پیشنهاد دقیق بده'
+    };
+    function setPreset(name,btn){
+        document.getElementById('custom-prompt').value=PRESETS[name]||'';
+        document.querySelectorAll('#preset-btns .btn').forEach(b=>b.classList.remove('btn-pu'));
+        if(btn) btn.classList.add('btn-pu');
+    }
+
+    const POPUP_PER_PAGE = 5;
+    let _ov_popup = null;
+    function _showTradePopup(tradesJson, title, color, page) {
+        let trades = typeof tradesJson === 'string' ? JSON.parse(tradesJson) : tradesJson;
+        page = page || 1;
+        if (_ov_popup) _ov_popup.remove();
+
+        const totalPages = Math.ceil(trades.length / POPUP_PER_PAGE);
+        const pageStart = (page - 1) * POPUP_PER_PAGE;
+        const pageTrades = trades.slice(pageStart, pageStart + POPUP_PER_PAGE);
+
+        function makeRow(t) {
+            const dirColor = t.dir === 'BUY' ? 'var(--green)' : 'var(--red)';
+            const outcomeIcon = t.outcome === 'win' ? '✅' : '❌';
+            const manualBadge = t.is_manual
+                ? '<span style="font-size:9px;padding:1px 5px;background:rgba(160,112,255,.2);color:var(--purple);border-radius:3px">دستی</span>'
+                : '<span style="font-size:9px;padding:1px 5px;background:rgba(77,168,255,.15);color:var(--blue);border-radius:3px">سیستم</span>';
+            const slStr = t.sl_pips ? `<span style="color:var(--red)">SL=${t.sl_pips}p</span>` : '';
+            const tpStr = t.tp_pips ? `<span style="color:var(--green)">TP=${t.tp_pips}p</span>` : '';
+            const extraHtml = t.extra
+                ? Object.entries(t.extra).filter(([k])=>k!=='is_manual')
+                    .map(([k,v])=>`<span style="color:var(--text3)">${k}:</span><span style="font-family:var(--mono)">${typeof v==='number'?v.toFixed(2):v}</span>`).join(' ')
+                : '';
+            const lossNote = t.outcome==='loss' && t.note ? `<div style="margin-top:4px;padding:4px 8px;background:var(--rdim);border-radius:6px;font-size:10px;color:var(--red);cursor:pointer" onclick="event.stopPropagation();this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">📝 یادداشت ضرر ▼</div><div style="display:none;margin-top:3px;font-size:10px;color:var(--text2);padding:4px 8px;background:var(--bg4);border-radius:6px">${escH(t.note)}</div>` : '';
+            return `<div data-tid="${t.tid}" style="padding:9px 12px;background:var(--bg3);border-radius:9px;margin-bottom:6px;cursor:pointer;border:1px solid var(--border);transition:.15s"
+                onmouseenter="this.style.borderColor='${color}';this.style.background='var(--bg4)'"
+                onmouseleave="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'">
+                <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px">
+                    <span style="background:var(--bg4);padding:1px 7px;border-radius:20px;font-size:11px;font-family:var(--mono);color:var(--text2)">${t.idx}</span>
+                    <span style="font-family:var(--mono);font-weight:700">${escH(t.sym)}</span>
+                    <span style="font-size:11px;color:${dirColor};font-weight:600">${t.dir}</span>
+                    <span>${outcomeIcon}</span>
+                    ${manualBadge}
+                    <span style="font-size:10px;color:var(--text3);margin-right:auto;font-family:var(--mono)">${t.entry_time||''}</span>
+                </div>
+                <div style="display:flex;gap:8px;font-size:11px;font-family:var(--mono);flex-wrap:wrap">
+                    ${slStr}${tpStr}
+                    <span style="color:var(--text2)">${escH(t.detail||'')}</span>
+                </div>
+                ${extraHtml?`<div style="font-size:10px;margin-top:3px;display:flex;gap:8px;flex-wrap:wrap">${extraHtml}</div>`:''}
+                ${lossNote}
+            </div>`;
+        }
+
+        function makePagination() {
+            if(totalPages <= 1) return '';
+            let btns = '';
+            btns += `<button data-pg="${page-1}" ${page===1?'disabled':''} style="padding:4px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:${page===1?'var(--text3)':'var(--text)'};cursor:${page===1?'default':'pointer'};font-size:12px">‹ قبلی</button>`;
+            for(let p=1;p<=totalPages;p++){
+                const act = p===page;
+                btns += `<button data-pg="${p}" style="padding:4px 10px;border-radius:7px;border:1px solid ${act?color:'var(--border)'};background:${act?'rgba(160,112,255,.15)':'var(--bg3)'};color:${act?color:'var(--text2)'};cursor:pointer;font-size:12px;font-family:var(--mono)">${p}</button>`;
+            }
+            btns += `<button data-pg="${page+1}" ${page===totalPages?'disabled':''} style="padding:4px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg3);color:${page===totalPages?'var(--text3)':'var(--text)'};cursor:${page===totalPages?'default':'pointer'};font-size:12px">بعدی ›</button>`;
+            btns += `<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${pageStart+1}–${Math.min(pageStart+POPUP_PER_PAGE,trades.length)} از ${trades.length}</span>`;
+            return `<div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 0 2px;flex-wrap:wrap">${btns}</div>`;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = 'ov-popup-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem';
+        overlay.innerHTML = `<div style="background:var(--bg2);border:1px solid ${color};border-radius:16px;width:100%;max-width:600px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.2rem;border-bottom:1px solid var(--border)">
+                <span style="font-family:var(--mono);font-weight:600;font-size:13px;color:${color}">${escH(title)} <span style="font-size:10px;color:var(--text3);font-weight:400">(${trades.length} ترید)</span></span>
+                <button id="ov-close-btn" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:20px;padding:2px 8px;border-radius:6px">✕</button>
+            </div>
+            <div style="padding:.75rem;overflow-y:auto;flex:1">
+                <div style="font-size:10px;color:var(--text3);margin-bottom:8px">💡 روی هر ردیف کلیک کن تا چارت باز بشه</div>
+                <div id="ov-rows">${pageTrades.length ? pageTrades.map(makeRow).join('') : '<div style="text-align:center;color:var(--text3);padding:20px">داده‌ای وجود ندارد</div>'}</div>
+            </div>
+            <div style="padding:0 .75rem .75rem">${makePagination()}</div>
+        </div>`;
+
+        overlay.addEventListener('click', e => {
+            if(e.target === overlay || e.target.id === 'ov-close-btn') {
+                _lastPopupState = null;  // دستی بسته شد — دیگه برنگرد
+                overlay.remove(); _ov_popup=null; return;
+            }
+            // pagination
+            const pgBtn = e.target.closest('[data-pg]');
+            if(pgBtn && !pgBtn.disabled) {
+                const pg = parseInt(pgBtn.dataset.pg);
+                if(pg >= 1 && pg <= totalPages) { _showTradePopup(trades, title, color, pg); return; }
+            }
+            // ترید کلیک
+            const row = e.target.closest('[data-tid]');
+            if(row) {
+                const tid = row.dataset.tid;
+                // state رو ذخیره کن تا بعد از بستن چارت برگردیم
+                _lastPopupState = {trades, title, color, page};
+                overlay.remove(); _ov_popup = null;
+                setTimeout(() => showChart(tid), 50);
+            }
+        });
+        document.body.appendChild(overlay);
+        _ov_popup = overlay;
+    }
+
+    async function loadOverallAnalysis(){
+        const container=document.getElementById('overall-content');
+        container.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:20px"><div class="spin"></div><span style="color:var(--text3);font-size:13px">در حال تحلیل...</span></div>';
+        try{
+            const cp=(document.getElementById('custom-prompt')?.value||'').trim();
+            const symFilter=(document.getElementById('ai-sym-filter')?.value||'').trim();
+            let urlParams=[];
+            if(cp) urlParams.push('custom_prompt='+encodeURIComponent(cp));
+            if(symFilter) urlParams.push('sym_filter='+encodeURIComponent(symFilter));
+            if(_aiMode && _aiMode!=='all') urlParams.push('mode='+encodeURIComponent(_aiMode));
+            const url='/api/overall-analysis'+(urlParams.length?'?'+urlParams.join('&'):'');
+            const d=await api('GET',url);
+            if(!d.ok) throw new Error(d.error);
+            const wc=d.winrate>=55?'var(--green)':d.winrate>=45?'var(--gold)':'var(--red)';
+            function pct(n){return d.total?Math.round(n/d.total*100)+'%':'—';}
+            function bar(n,t,c){const p=t?Math.round(n/t*100):0;return `<div style="height:5px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-top:3px"><div style="height:100%;width:${p}%;background:${c};border-radius:3px"></div></div>`;}
+
+            const td=d.trade_detail_data||{};
+
+            // helper: ردیف کلیک‌پذیر با شماره تریدها
+            // تریدها رو در window ذخیره می‌کنیم تا از مشکل escape در HTML جلوگیری بشه
+            window._ovTradeData = window._ovTradeData || {};
+            function clickRow(arr, label, color, icon) {
+                if(!arr||!arr.length) return '';
+                const key = 'k_' + Math.random().toString(36).slice(2);
+                window._ovTradeData[key] = arr;
+                const nums = '';
+                return `<div onclick="_showTradePopup(window._ovTradeData['${key}'], '${icon} ${label}', '${color}')" 
+                    style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:var(--bg3);border-radius:8px;font-size:12px;cursor:pointer;border:1px solid transparent;transition:.15s"
+                    onmouseenter="this.style.borderColor='${color}';this.style.background='var(--bg4)'" onmouseleave="this.style.borderColor='transparent';this.style.background='var(--bg3)'">
+                    <span>${icon} ${label}</span>
+                    <span style="font-family:var(--mono);color:${color};font-weight:600">${arr.length} ترید <span style="font-size:10px;color:var(--text3);font-weight:400">${nums.length<40?nums:nums.slice(0,38)+'...'}</span></span>
+                </div>`;
+            }
+
+            const rr_rows=(d.rr_bucket_lines||[]).map(l=>`<div style="padding:5px 8px;background:var(--bg3);border-radius:6px;font-size:12px;font-family:var(--mono)">${l}</div>`).join('');
+            const st_rows=(d.setup_lines||[]).map(l=>`<div style="padding:5px 8px;background:var(--bg3);border-radius:6px;font-size:12px;font-family:var(--mono)">${l}</div>`).join('');
+
+            // برای sl_rev: شماره‌ها از خود آرایه
+            const slRevNums = '';
+
+            const html=`
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem">
+  <div class="scard" style="--sa:var(--purple)"><div class="scard-lbl">نرخ برد</div><div class="scard-val" style="color:${wc}">${d.winrate}%</div><div class="scard-sub">${d.wins} برد · ${d.losses} باخت از ${d.total}</div></div>
+  <div class="scard" style="--sa:var(--blue)"><div class="scard-lbl">R گرفته / MFE</div><div class="scard-val bl">${d.avg_taken_r}R</div><div class="scard-sub">حداکثر ممکن: ${d.avg_mfe_r}R</div></div>
+</div>
+
+<!-- رسیدن به سطوح -->
+<div class="sec" style="margin-bottom:1rem">
+  <div class="sec-hd"><div class="sec-ttl"><span class="sdot g"></span>رسیدن به سطوح ریوارد</div><span style="font-size:10px;color:var(--text3)">${d.total} ترید — کلیک کن برای جزئیات</span></div>
+  <div class="sec-bd" style="display:flex;flex-direction:column;gap:7px">
+    ${(()=>{const k1='rv_1r_'+Date.now();window._ovTradeData[k1]=td.r1||[];return `<div onclick="_showTradePopup(window._ovTradeData['${k1}'],'🟢 رسیدن به 1R','var(--green)')" style="cursor:pointer;padding:6px 2px;border-radius:6px;transition:.15s" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='transparent'"><div style="display:flex;justify-content:space-between;font-size:12px"><span>🟢 1R</span><span style="font-family:var(--mono);color:var(--green)">${d.reached_1r_count} · ${pct(d.reached_1r_count)}</span></div>${bar(d.reached_1r_count,d.total,'var(--green)')}</div>`;})()}
+    ${(()=>{const k2='rv_2r_'+Date.now();window._ovTradeData[k2]=td.r2||[];return `<div onclick="_showTradePopup(window._ovTradeData['${k2}'],'🔵 رسیدن به 2R','var(--blue)')" style="cursor:pointer;padding:6px 2px;border-radius:6px;transition:.15s" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='transparent'"><div style="display:flex;justify-content:space-between;font-size:12px"><span>🔵 2R</span><span style="font-family:var(--mono);color:var(--blue)">${d.reached_2r_count} · ${pct(d.reached_2r_count)}</span></div>${bar(d.reached_2r_count,d.total,'var(--blue)')}</div>`;})()}
+    ${(()=>{const k3='rv_3r_'+Date.now();window._ovTradeData[k3]=td.r3||[];return `<div onclick="_showTradePopup(window._ovTradeData['${k3}'],'🟣 رسیدن به 3R','var(--purple)')" style="cursor:pointer;padding:6px 2px;border-radius:6px;transition:.15s" onmouseenter="this.style.background='var(--bg3)'" onmouseleave="this.style.background='transparent'"><div style="display:flex;justify-content:space-between;font-size:12px"><span>🟣 3R</span><span style="font-family:var(--mono);color:var(--purple)">${d.reached_3r_count} · ${pct(d.reached_3r_count)}</span></div>${bar(d.reached_3r_count,d.total,'var(--purple)')}</div>`;})()}
+  </div>
+</div>
+
+<!-- بعد از SL -->
+<div class="sec" style="margin-bottom:1rem">
+  <div class="sec-hd"><div class="sec-ttl"><span class="sdot r"></span>بعد از SL</div><span style="font-size:10px;color:var(--text3)">${d.losses} ضرر — کلیک کن برای جزئیات</span></div>
+  <div class="sec-bd" style="display:flex;flex-direction:column;gap:6px">
+    ${clickRow((td.sl_rev||[]).filter(t=>t.extra?.psl_r>=1.0), 'برگشت به 1R', 'var(--red)', '🔄')}
+    ${clickRow((td.sl_rev||[]).filter(t=>t.extra?.psl_r>=1.5), 'برگشت به 1.5R', 'var(--red)', '🔄')}
+    ${clickRow((td.sl_rev||[]).filter(t=>t.extra?.psl_r>=2.0), 'برگشت به 2R', 'var(--red)', '🔄')}
+    ${clickRow((td.sl_rev||[]).filter(t=>t.extra?.psl_r>=3.0), 'برگشت به 3R', 'var(--red)', '🔄')}
+    ${d.trade_detail_data?.avg_reversal_r?`<div style="padding:6px 10px;background:var(--rdim);border-radius:8px;font-size:12px">📏 میانگین برگشت دستی بعد SL: <span style="font-family:var(--mono);color:var(--red)">${d.trade_detail_data.avg_reversal_r}R</span></div>`:''}
+  </div>
+</div>
+
+<!-- R/R -->
+${rr_rows?`<div class="sec" style="margin-bottom:1rem">
+  <div class="sec-hd"><div class="sec-ttl"><span class="sdot gold"></span>R/R برنامه vs واقعی</div></div>
+  <div class="sec-bd" style="display:flex;flex-direction:column;gap:5px">
+    <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg3);border-radius:8px;font-size:12px"><span>📐 میانگین R/R برنامه</span><span style="font-family:var(--mono)">${d.avg_planned_rr||'—'}R</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg3);border-radius:8px;font-size:12px"><span>اختلاف (منفی=زود بستیم)</span><span style="font-family:var(--mono);color:${(d.avg_rr_gap||0)<0?'var(--red)':'var(--green)'}">${d.avg_rr_gap>0?'+':''}${d.avg_rr_gap||0}R</span></div>
+    ${rr_rows}
+  </div>
+</div>`:''}
+
+<!-- ستاپ‌ها -->
+${st_rows?`<div class="sec" style="margin-bottom:1rem"><div class="sec-hd"><div class="sec-ttl"><span class="sdot pu"></span>عملکرد ستاپ‌ها</div></div><div class="sec-bd" style="display:flex;flex-direction:column;gap:5px">${st_rows}</div></div>`:''}
+
+<!-- Pattern -->
+<div class="sec" style="margin-bottom:1rem">
+  <div class="sec-hd"><div class="sec-ttl"><span class="sdot gold"></span>Pattern های کشف‌شده</div><span style="font-size:10px;color:var(--text3)">کلیک کن</span></div>
+  <div class="sec-bd" style="display:flex;flex-direction:column;gap:6px">
+    ${clickRow(td.early||[], 'زود خارج شدیم', 'var(--gold)', '🏃')}
+    ${clickRow(td.fr_missed||[], 'فری‌ریسک ممکن بود ولی نگذاشتیم', 'var(--red)', '🛡️')}
+    ${clickRow(td.fr_done||[], 'فری‌ریسک انجام شد', 'var(--green)', '🛡️')}
+    <div style="display:flex;justify-content:space-between;padding:7px 12px;background:var(--bg3);border-radius:8px;font-size:12px">
+      <span>🕐 بهترین / بدترین ساعت</span>
+      <span style="font-family:var(--mono)"><span style="color:var(--green)">${d.best_hour||'—'}</span> / <span style="color:var(--red)">${d.worst_hour||'—'}</span></span>
+    </div>
+    <div style="display:flex;justify-content:space-between;padding:7px 12px;background:var(--bg3);border-radius:8px;font-size:12px">
+      <span>📈 بهترین / بدترین نماد</span>
+      <span style="font-family:var(--mono)"><span style="color:var(--green)">${d.best_sym||'—'}</span> / <span style="color:var(--red)">${d.worst_sym||'—'}</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- پاسخ AI -->
+<div class="sec"><div class="sec-hd"><div class="sec-ttl"><span class="sdot pu"></span>پاسخ هوش مصنوعی</div></div><div class="sec-bd" style="white-space:pre-line;line-height:1.9;font-size:13px;color:var(--text2)">${escH(d.analysis).replace(/^(#+)\s*/gm,'').replace(/\*\*(.*?)\*\*/g,'<b style=\"color:var(--text)\">$1</b>').replace(/^(\d+\.\s)/gm,'<span style=\"color:var(--purple);font-family:var(--mono)\">$1</span>')}</div></div>`;
+
+            container.innerHTML=html;
+        }catch(e){
+            container.innerHTML=`<div class="empty"><div class="empty-ico">⚠️</div><p style="color:var(--red)">${escH(e.message)}</p></div>`;
+        }
+    }
+
+    function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function fmtPx(v){if(v===null||v===undefined)return '—';const n=parseFloat(v);if(isNaN(n))return '—';if(n>=10000)return n.toLocaleString('en',{maximumFractionDigits:1});if(n>=1)return n.toFixed(5).replace(/\.?0+$/,'');return n.toFixed(7).replace(/\.?0+$/,'');}
+    function fmtR(v){if(v===null||v===undefined)return '—';const r=parseFloat(v);return r.toFixed(2)+'R';}
+    
+    let _currentPage = 1;
+    const TRADES_PER_PAGE = 10;
+
+    function render(resetPage){
+        if(resetPage) _currentPage = 1;
+        const closed=_trades.filter(t=>t.status==='closed'||t.status==='watching').filter(t=>t.outcome==='win'||t.outcome==='loss');const wins=closed.filter(t=>t.outcome==='win').length;const losses=closed.length-wins;let sumR=0;
+        closed.forEach(t=>{
+            const mul=getPipMultiplier(t.sym);
+            let riskPips=null;
+            if(t.sl_price && t.entry){
+                riskPips = Math.abs(t.entry - t.sl_price) * mul;
+            }
+            const exitForSum = t.exit || (t.outcome==='win' && t.tp_price ? t.tp_price : null) || (t.outcome==='loss' && t.sl_price ? t.sl_price : null);
+            if(exitForSum && riskPips && riskPips>0){
+                const rawPips = (t.direction==='BUY') ? (exitForSum - t.entry)*mul : (t.entry - exitForSum)*mul;
+                const takenR = rawPips / riskPips;
+                sumR += takenR;  // برد مثبت، باخت منفی — از علامت rawPips میاد
+            }
+        });
+        document.getElementById('st-total').textContent=closed.length;
+        document.getElementById('st-wr').innerHTML=`${wins} / ${losses}`;
+        document.getElementById('st-wr-detail').innerHTML=`برد: ${wins} | باخت: ${losses}`;
+        const pe=document.getElementById('st-pnl');
+        pe.textContent=fmtR(sumR);
+        pe.className='scard-val '+(sumR>=0?'g':'r');
+        document.getElementById('st-winrate').innerHTML=closed.length?Math.round(wins/closed.length*100)+'%':'—';
+        // مرتب‌سازی
+        const _sort = document.getElementById('sort-select')?.value || 'entry_desc';
+        const sortFn = (arr) => [...arr].sort((a,b)=>{
+            if(_sort==='entry_desc'||_sort==='win'||_sort==='loss'){
+                const ta=a.entryTime?new Date(a.entryTime.replace(' ','T')).getTime():0;
+                const tb=b.entryTime?new Date(b.entryTime.replace(' ','T')).getTime():0;
+                return tb-ta;
+            }
+            if(_sort==='created_desc'){
+                const ta=a.createdAt?new Date(a.createdAt.replace(' ','T')).getTime():0;
+                const tb=b.createdAt?new Date(b.createdAt.replace(' ','T')).getTime():0;
+                return tb-ta;
+            }
+            return 0;
+        });
+        const filterFn = (arr) => {
+            let res = sortFn(arr);
+            if(_sort==='win') res=res.filter(t=>t.outcome==='win');
+            if(_sort==='loss') res=res.filter(t=>t.outcome==='loss');
+            // فیلتر بازه تاریخ
+            if(_dateFrom||_dateTo){
+                const from=_dateFrom?new Date(_dateFrom+'T00:00:00'):null;
+                const to=_dateTo?new Date(_dateTo+'T23:59:59'):null;
+                res=res.filter(t=>{
+                    const et=t.entryTime||t.createdAt||'';if(!et)return false;
+                    try{const d=new Date(et.replace(' ','T'));return(!from||d>=from)&&(!to||d<=to);}catch(e){return false;}
+                });
+            }
+            // فیلتر نماد
+            if(_symSearch){
+                res=res.filter(t=>(t.sym||'').toUpperCase().includes(_symSearch));
+            }
+            return res;
+        };
+        populateWeekFilter(_trades);
+        let list = filterFn(_trades);
+        if(_tab==='closed') list = filterFn(closed);
+        const wrap=document.getElementById('trades-wrap');
+        const pgWrap=document.getElementById('pagination-wrap');
+        if(!list.length){wrap.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><p>هیچ معامله‌ای ثبت نشده است</p></div>`;if(pgWrap)pgWrap.style.display='none';return;}
+        // pagination
+        const totalPages = Math.ceil(list.length / TRADES_PER_PAGE);
+        if(_currentPage > totalPages) _currentPage = totalPages;
+        const pageStart = (_currentPage - 1) * TRADES_PER_PAGE;
+        const pageEnd = pageStart + TRADES_PER_PAGE;
+        const pageList = list.slice(pageStart, pageEnd);
+        // render pagination buttons
+        if(pgWrap){
+            pgWrap.style.display = totalPages > 1 ? 'flex' : 'none';
+            let pgHtml = '';
+            pgHtml += `<button onclick="goPage(${_currentPage-1})" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:${_currentPage===1?'var(--text3)':'var(--text)'};cursor:${_currentPage===1?'default':'pointer'};font-size:12px" ${_currentPage===1?'disabled':''}>‹ قبلی</button>`;
+            for(let p=1;p<=totalPages;p++){
+                const isActive = p===_currentPage;
+                pgHtml += `<button onclick="goPage(${p})" style="padding:5px 10px;border-radius:8px;border:1px solid ${isActive?'var(--purple)':'var(--border)'};background:${isActive?'var(--purdim)':'var(--bg3)'};color:${isActive?'var(--purple)':'var(--text2)'};cursor:pointer;font-size:12px;font-family:var(--mono)">${p}</button>`;
+            }
+            pgHtml += `<button onclick="goPage(${_currentPage+1})" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:${_currentPage===totalPages?'var(--text3)':'var(--text)'};cursor:${_currentPage===totalPages?'default':'pointer'};font-size:12px" ${_currentPage===totalPages?'disabled':''}>بعدی ›</button>`;
+            pgHtml += `<span style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-right:4px">${pageStart+1}–${Math.min(pageEnd,list.length)} از ${list.length}</span>`;
+            pgWrap.innerHTML = pgHtml;
+        }
+        wrap.innerHTML=pageList.map((t, idx)=>{
+            const tradeNum = list.length - (pageStart + idx); // شماره از ۱ تا N (جدیدترین = ۱)
+            const isCryptoFlag=isCrypto(t.sym);
+            const mktBdg=isCryptoFlag?`<span class="bdg" style="background:var(--gdold);color:var(--gold);border:1px solid rgba(240,165,0,.2)">🪙 Crypto</span>`:`<span class="bdg" style="background:var(--bluedim);color:var(--blue);border:1px solid rgba(77,168,255,.2)">💱 Forex</span>`;
+            const noteH=t.note?`<div class="tc-note">${escH(t.note)}</div>`:'';
+            const exitNoteH=t.exitNote?`<div class="tc-note tc-exit-note">🚪 ${escH(t.exitNote)}</div>`:'';
+            const mul=getPipMultiplier(t.sym);
+            let riskPips=null;
+            if(t.sl_price && t.entry){
+                riskPips = Math.abs(t.entry - t.sl_price) * mul;
+            }
+            const isOpen = t.status === 'open';
+            const isWatching = t.status === 'watching';  // TP خورده، منتظر SL/3R
+            const isPending = isOpen || isWatching;
+            let takenR=null;
+            // اگه exit نداریم ولی outcome مشخصه، از tp_price (win) یا sl_price (loss) fallback بگیر
+            const exitForCalc = t.exit || (t.outcome==='win' && t.tp_price ? t.tp_price : null) || (t.outcome==='loss' && t.sl_price ? t.sl_price : null);
+            if(exitForCalc && riskPips && riskPips>0){
+                const rawPips = (t.direction==='BUY') ? (exitForCalc - t.entry)*mul : (t.entry - exitForCalc)*mul;
+                takenR = (rawPips / riskPips).toFixed(2);
+            }
+            const takenRNum = takenR !== null ? parseFloat(takenR) : null;
+            const pnlColor = isPending ? '' : (takenRNum > 0 ? 'pos' : (takenRNum < 0 ? 'neg' : 'zero'));
+            let slPips=t.sl_pips;
+            if(slPips===undefined||slPips===null){if(t.sl_price&&t.entry){slPips=Math.abs((t.sl_price-t.entry)*mul).toFixed(1);}else slPips=null;}
+            let tpPips=t.tp_pips;
+            if(tpPips===undefined||tpPips===null){if(t.tp_price&&t.entry){tpPips=Math.abs((t.tp_price-t.entry)*mul).toFixed(1);}else tpPips=null;}
+            let freeRiskBadge='';
+            if(t.review_free_risk_saved===true){freeRiskBadge='<span class="bdg" style="background:var(--purdim);color:var(--purple);border:1px solid rgba(160,112,255,.3)">🛡️ Free Risk</span>';}
+            const isMissedZone = t.is_missed_zone === true;
+            const missedZoneBadge = isMissedZone ? '<span class="bdg" style="background:rgba(255,140,0,.18);color:#ff8c00;border:1px solid rgba(255,140,0,.4)">🚫 جا مونده</span>' : '';
+            // badge وضعیت
+            const openBadge = isOpen ? '<span class="bdg" style="background:rgba(240,165,0,.15);color:var(--gold);border:1px solid rgba(240,165,0,.3);animation:pulse-badge 2s infinite">⏳ در جریان</span>' : '';
+            const watchingBadge = isWatching ? '<span class="bdg" style="background:rgba(77,168,255,.15);color:var(--blue);border:1px solid rgba(77,168,255,.3);animation:pulse-badge 2s infinite">👁️ TP ✓ — تا SL/3R</span>' : '';
+            
+            // نمایش برگشت بعد SL (دستی یا خودکار)
+            let reversalLine = '';
+            const revOccurred = t.review_reversal_occurred === true;
+            let revValue = t.review_reversal_target_pips;
+            if(revOccurred && revValue !== undefined && revValue !== null && revValue !== 0){
+                let revShow = revValue;
+                if(isCryptoFlag && riskPips && riskPips>0){
+                    revShow = (revValue / riskPips).toFixed(2);
+                    reversalLine = `<div class="reversal-line">🔄 برگشت بعد SL: ${revShow}R</div>`;
+                } else {
+                    reversalLine = `<div class="reversal-line">🔄 برگشت بعد SL: ${revShow} پیپ</div>`;
+                }
+            }
+            
+            const pollStatusHtml = isOpen
+                ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.2);border-radius:8px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:var(--gold)">⏳ در انتظار تعیین تکلیف — SL یا 3R</span><span style="color:var(--text3);font-family:var(--mono);font-size:10px">${t.last_poll ? 'آخرین چک: '+escH(t.last_poll.slice(11,16)) : 'هر ۲ ساعت چک میشه'}</span></div>`
+                : (isWatching
+                    ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(77,168,255,.08);border:1px solid rgba(77,168,255,.2);border-radius:8px;font-size:11px;display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:var(--blue)">👁️ تارگت زده شد — منتظر SL یا ریوارد ۳ برای تکمیل چارت</span><span style="color:var(--text3);font-family:var(--mono);font-size:10px">${t.last_poll ? 'آخرین چک: '+escH(t.last_poll.slice(11,16)) : 'هر ۲ ساعت چک میشه'}</span></div>`
+                    : '');
+
+            let reviewHtml='';
+            if(isOpen || isWatching){ reviewHtml = pollStatusHtml; }
+            else if(t.review_mfe!==undefined&&t.review_mfe!==null){
+                if(t.outcome==='win'){
+                    let mfeRaw = (t.review_mfe !== undefined && t.review_mfe !== null) ? t.review_mfe : null;
+                    // اگه MFE نداریم ولی TP داریم، از TP بگیر
+                    if((mfeRaw===null||mfeRaw===0) && t.tp_price && t.entry && riskPips>0){
+                        const tpPipsCalc = Math.abs(t.tp_price - t.entry)*mul;
+                        mfeRaw = tpPipsCalc;
+                    }
+                    let mfeShow = mfeRaw, maeShow = t.review_mae;
+                    if(isCryptoFlag && riskPips && riskPips>0 && mfeRaw){
+                        mfeShow=(parseFloat(mfeRaw)/riskPips).toFixed(2)+'R';
+                        if(maeShow) maeShow=(maeShow/riskPips).toFixed(2);
+                    }
+                    reviewHtml=`<div class="ai-field" style="margin-top:8px;"><span class="ai-label">📝 ارزیابی دستی:</span>Max Profit: ${mfeShow||'—'} ${isCryptoFlag?'R':'پیپ'} | Max DD: ${maeShow||'—'} ${isCryptoFlag?'R':'پیپ'} | برگشت به ورود: ${t.review_pullback?'بله':'خیر'}${t.review_note?`<br><span class="ai-label">یادداشت:</span> ${escH(t.review_note)}`:''}</div>`;
+                }else{
+                    let mfeFrom = (t.review_mfe !== undefined && t.review_mfe !== null && t.review_mfe !== 0) ? t.review_mfe : t.mfe_before_sl_pip;
+                    let mfeShow = mfeFrom;
+                    let revTargetShow = t.review_reversal_target_pips;
+                    if(isCryptoFlag && riskPips && riskPips>0 && mfeFrom > 0){
+                        mfeShow = (mfeFrom / riskPips).toFixed(2);
+                        if(revTargetShow) revTargetShow = (revTargetShow / riskPips).toFixed(2);
+                    } else if(!isCryptoFlag && mfeFrom === 0 && t.review_mfe > 0){
+                        mfeShow = t.review_mfe;
+                    }
+                    let revText = '';
+                    if(t.review_reversal_occurred && t.review_reversal_from_sl && revTargetShow){
+                        revText = ` | برگشت بعد SL: از ${t.review_reversal_from_sl} پیپ از SL شروع شد و تا ${revTargetShow} ${isCryptoFlag?'R':'پیپ'} (از ورود) رفت`;
+                        } else {
+                        revText = ` | بعد از استاپ لاس به سمت تارگت برنگشت`;
+                    }
+                    reviewHtml = `<div class="ai-field" style="margin-top:8px;"><span class="ai-label">📝 ارزیابی دستی:</span>حداکثر سود قبل از SL: ${mfeShow} ${isCryptoFlag?'R':'پیپ'}${revText}${t.review_note?`<br><span class="ai-label">یادداشت:</span> ${escH(t.review_note)}`:''}</div>`;
+                }
+            } else if(t.outcome==='loss'){
+                let slRevParts=[];
+
+
+            }
+            
+return `<div class="tcard ${isMissedZone?'missed-zone':(isWatching?'closed-win':(t.outcome==='win'?'closed-win':'closed-loss'))}" onclick="showChart('${t.id}')"><div class="tc-top"><div><div class="tc-sym"><span class="tc-num">${tradeNum}</span> ${escH(t.sym)} <span style="font-size:11px;color:var(--text3);font-family:var(--mono)">${t.tf||''}</span></div><div class="tc-badges"><span class="bdg ${t.direction==='BUY'?'bdg-long':'bdg-short'}">${t.direction==='BUY'?'↑ BUY':'↓ SELL'}</span>${mktBdg}${isOpen ? openBadge : (isWatching ? watchingBadge : (t.outcome==='win'?'<span class="bdg" style="background:var(--gdim);color:var(--green);border:1px solid rgba(0,217,139,.2)">✓ برد</span>':'<span class="bdg" style="background:var(--rdim);color:var(--red);border:1px solid rgba(255,69,96,.2)">✗ باخت</span>'))}${freeRiskBadge}${missedZoneBadge}</div></div><div><div class="tc-pnl ${isOpen?'zero':(takenRNum>0?'pos':(takenRNum<0?'neg':'zero'))}" style="${isOpen?'color:var(--gold)':''}">
+${isOpen ? '?' : (takenR ? takenR+'R'+(isWatching?' ✓':'') : '—')}</div>
+<div class="tc-pnl-sub">${isOpen ? 'نامشخص' : (isWatching ? 'برد ✓ — ادامه' : 'R خروج')}</div></div></div><div class="tc-grid"><div class="pbox"><div class="pbox-lbl">ورود</div><div class="pbox-val">${fmtPx(t.entry)}</div></div><div class="pbox"><div class="pbox-lbl">خروج</div><div class="pbox-val g">${fmtPx(t.exit)}</div></div><div class="pbox"><div class="pbox-lbl">SL</div><div class="pbox-val r">${t.sl_price?fmtPx(t.sl_price):'—'} ${slPips?`<small>(${slPips}p)</small>`:''}</div></div><div class="pbox"><div class="pbox-lbl">TP</div><div class="pbox-val g">${t.tp_price?fmtPx(t.tp_price):'—'} ${tpPips?`<small>(${tpPips}p)</small>`:''}</div></div></div>${reversalLine}<div class="tc-time">⏰ ورود: ${escH(t.entryTime||'')} ${t.exitTime?`&nbsp;|&nbsp; 🚪 خروج: ${escH(t.exitTime)}`:''}</div>${noteH}${exitNoteH}<div class="tc-actions" onclick="event.stopPropagation()"><button class="btn btn-sm btn-r" onclick="event.stopPropagation();deleteTrade('${t.id}')">✕ حذف</button><button class="btn btn-sm" style="background:rgba(231,76,60,.15);color:#e7603c;border:1px solid rgba(231,76,60,.35)" onclick="event.stopPropagation();openEditSlModal('${t.id}')">✏️ ادیت SL</button><button class="btn btn-sm btn-pu" onclick="event.stopPropagation();openReviewModal('${t.id}')">📝 ارزیابی</button><span class="tc-ts">${escH(t.createdAt||'')}</span></div>${reviewHtml}</div>`;
+        }).join('');
+    }
+    // محاسبه خودکار فرم دستی
+    ['manual-entry','manual-exit','manual-sl','manual-tp','manual-sym'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', manUpdateCalc);
+    });
+
+    loadFromServer();
+</script>
+</body>
+</html>
