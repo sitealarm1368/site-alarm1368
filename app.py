@@ -2868,6 +2868,26 @@ def _do_update(upd, token):
                             [[{"text": "❌ انصراف", "callback_data": f"flow_cancel:{en_cid}"}]])
                         _pending_alarm[en_cid] = {"step": "edit_name_input", "data": {}, "bot_msg_id": cbq_msg_id}
 
+                    elif cbq_data.startswith("show_pin:"):
+                        # نمایش کد فعال‌سازی سایت (web_pin) موجود کاربر
+                        sp_cid = cbq_data.split(":", 1)[1]
+                        answer_callback(token_cbq, cbq_id)
+                        d_sp = load_alerts()
+                        users_sp = d_sp.get("users", [])
+                        user_sp = next((u for u in users_sp if str(u.get("chat_id","")) == sp_cid), None)
+                        pin_sp = user_sp.get("web_pin") if user_sp else None
+                        if not pin_sp:
+                            pin_sp = f"{secrets.randbelow(1000000):06d}"
+                            if user_sp:
+                                user_sp["web_pin"] = pin_sp
+                            else:
+                                users_sp.append({"chat_id": sp_cid, "username": "", "joined_at": now_teh(), "custom_name": "", "private_access": False, "approved": False, "web_pin": pin_sp})
+                            d_sp["users"] = users_sp
+                            save_alerts(d_sp)
+                        send_tg(token_cbq, sp_cid,
+                            f"🔑 <b>کد فعال‌سازی سایت شما:</b> <code>{pin_sp}</code>\n\n"
+                            "این کد رو توی سایت (دکمه «🔑 کد فعال‌سازی» زیر نام کاربری) وارد کن.")
+
                     elif cbq_data == "close_myalerts":
                         answer_callback(token_cbq, cbq_id, "بسته شد")
                         try:
@@ -4202,6 +4222,7 @@ def _do_update(upd, token):
                     if not has_priv:
                         status_kb.append([{"text": "📩 درخواست فعال‌سازی آلارم شخصی", "callback_data": f"req_private:{cid}"}])
                     status_kb.append([{"text": "✏️ ویرایش اسم", "callback_data": f"edit_name:{cid}"}])
+                    status_kb.append([{"text": "🔑 کد فعال‌سازی", "callback_data": f"show_pin:{cid}"}])
                     status_kb.append([{"text": "📡 سیگنال‌های من", "callback_data": f"signals_view:{cid}:mine"},
                                       {"text": "📊 همه سیگنال‌ها", "callback_data": f"signals_view:{cid}:all"}])
                     status_kb.append([{"text": "🎯 لیست تریگر", "callback_data": f"trigger_list:{cid}"}])
