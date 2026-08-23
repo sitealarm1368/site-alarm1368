@@ -6882,22 +6882,30 @@ def report_export_xlsx():
     wb = Workbook()
     ws = wb.active
     ws.title = "آلارم‌ها"
-    ws.sheet_view.rightToLeft = True
+    ws.sheet_view.rightToLeft = False
     ws.append([label_by_key[k] for k in selected_keys])
+    header_fill = PatternFill("solid", fgColor="D9D9D9")
     for cell in ws[1]:
         cell.font = Font(bold=True)
         cell.alignment = Alignment(horizontal="center")
+        cell.fill = header_fill
     ws.freeze_panes = "A2"
+
+    direction_col = selected_keys.index("direction") + 1 if "direction" in selected_keys else None
+    buy_fill   = PatternFill("solid", fgColor="D9F2E3")  # سبز کم‌رنگ
+    sell_fill  = PatternFill("solid", fgColor="FBDEDE")  # قرمز کم‌رنگ
+    zebra_fill = PatternFill("solid", fgColor="F5F5F5")  # رنگ آروم برای ردیف‌های یکی‌درمیان
 
     for a, asg, status_lbl in final_rows:
         created_d, created_t = _split_dt(a.get("created_at",""))
         fired_d, fired_t = _split_dt(a.get("fired_at",""))
         false_d, false_t = _split_dt(asg.get("false_at",""))
         expired_d, expired_t = _split_dt(a.get("expired_at",""))
+        direction_lbl = "بای" if a.get("condition") == "below" else "سل"
         values_by_key = {
             "symbol":       a.get("symbol",""),
             "alarm_tag":    asg.get("alarm_tag","") or "",
-            "direction":    "بای" if a.get("condition") == "below" else "سل",
+            "direction":    direction_lbl,
             "target_price": a.get("target_price",""),
             "fired_price":  a.get("fired_price","") or "",
             "status":       status_lbl,
@@ -6912,6 +6920,16 @@ def report_export_xlsx():
             "comment":      a.get("comment",""),
         }
         ws.append([values_by_key[k] for k in selected_keys])
+        r = ws.max_row
+        ws.row_dimensions[r].height = 24
+        # ردیف‌های یکی‌درمیون یه رنگ آروم بگیرن
+        if (r % 2) == 0:
+            for cell in ws[r]:
+                cell.fill = zebra_fill
+        # فقط سلول جهت (بای/سل) رنگ خودشو بگیره
+        if direction_col:
+            dc = ws.cell(row=r, column=direction_col)
+            dc.fill = buy_fill if direction_lbl == "بای" else sell_fill
 
     from openpyxl.utils import get_column_letter
     for i, k in enumerate(selected_keys, start=1):
