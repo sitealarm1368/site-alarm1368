@@ -9,7 +9,7 @@ VERSION = "8.0"
 
 TEHRAN = pytz.timezone("Asia/Tehran")
 
-# =============..======= متغیرهای محیطی ====================
+# ==================== متغیرهای محیطی ====================
 ALERTS_FILE = "alerts.json"
 FIRED_BACKUP_FILE = "fired_backup.json"  # لایه‌ی دفاعی دوم — جلوگیری از فایر مجدد بعد از ری‌استارت اگه Supabase قطع بود
 BOT_TOKEN_ENV = os.environ.get("BOT_TOKEN", "")
@@ -2868,26 +2868,6 @@ def _do_update(upd, token):
                             [[{"text": "❌ انصراف", "callback_data": f"flow_cancel:{en_cid}"}]])
                         _pending_alarm[en_cid] = {"step": "edit_name_input", "data": {}, "bot_msg_id": cbq_msg_id}
 
-                    elif cbq_data.startswith("show_pin:"):
-                        # نمایش کد فعال‌سازی سایت (web_pin) موجود کاربر
-                        sp_cid = cbq_data.split(":", 1)[1]
-                        answer_callback(token_cbq, cbq_id)
-                        d_sp = load_alerts()
-                        users_sp = d_sp.get("users", [])
-                        user_sp = next((u for u in users_sp if str(u.get("chat_id","")) == sp_cid), None)
-                        pin_sp = user_sp.get("web_pin") if user_sp else None
-                        if not pin_sp:
-                            pin_sp = f"{secrets.randbelow(1000000):06d}"
-                            if user_sp:
-                                user_sp["web_pin"] = pin_sp
-                            else:
-                                users_sp.append({"chat_id": sp_cid, "username": "", "joined_at": now_teh(), "custom_name": "", "private_access": False, "approved": False, "web_pin": pin_sp})
-                            d_sp["users"] = users_sp
-                            save_alerts(d_sp)
-                        send_tg(token_cbq, sp_cid,
-                            f"🔑 <b>کد فعال‌سازی سایت شما:</b> <code>{pin_sp}</code>\n\n"
-                            "این کد رو توی سایت (دکمه «🔑 کد فعال‌سازی» زیر نام کاربری) وارد کن.")
-
                     elif cbq_data == "close_myalerts":
                         answer_callback(token_cbq, cbq_id, "بسته شد")
                         try:
@@ -4222,7 +4202,6 @@ def _do_update(upd, token):
                     if not has_priv:
                         status_kb.append([{"text": "📩 درخواست فعال‌سازی آلارم شخصی", "callback_data": f"req_private:{cid}"}])
                     status_kb.append([{"text": "✏️ ویرایش اسم", "callback_data": f"edit_name:{cid}"}])
-                    status_kb.append([{"text": "🔑 کد فعال‌سازی", "callback_data": f"show_pin:{cid}"}])
                     status_kb.append([{"text": "📡 سیگنال‌های من", "callback_data": f"signals_view:{cid}:mine"},
                                       {"text": "📊 همه سیگنال‌ها", "callback_data": f"signals_view:{cid}:all"}])
                     status_kb.append([{"text": "🎯 لیست تریگر", "callback_data": f"trigger_list:{cid}"}])
@@ -6559,6 +6538,26 @@ def report_export_html():
   .dl-btn:hover{{filter:brightness(1.1)}}
   .hint{{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7}}
   a.back{{color:var(--blue);font-size:12px;text-decoration:none;display:inline-block;margin-bottom:14px}}
+  .modal-overlay{{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;
+    align-items:center;justify-content:center;padding:16px}}
+  .modal-overlay.show{{display:flex}}
+  .modal-box{{max-width:420px;width:100%;max-height:85vh;overflow-y:auto;background:var(--surface);
+    border:1px solid var(--border2);border-radius:16px;padding:22px}}
+  .modal-box h2{{font-size:16px;margin:0 0 4px;font-weight:800}}
+  .modal-sub{{font-size:11px;color:var(--muted);margin-bottom:14px}}
+  .col-actions{{display:flex;gap:8px;margin-bottom:12px}}
+  .col-actions button{{flex:1;padding:7px;border-radius:8px;border:1px solid var(--border2);
+    background:var(--surface2);color:var(--text);font-size:11px;cursor:pointer;font-family:inherit}}
+  .col-list{{display:flex;flex-direction:column;gap:2px;background:var(--surface2);
+    border:1px solid var(--border2);border-radius:10px;padding:8px 12px;margin-bottom:16px}}
+  .col-list label{{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;
+    color:var(--text);margin:0;padding:6px 0}}
+  .col-list input{{width:16px;height:16px}}
+  .modal-btns{{display:flex;gap:8px}}
+  .modal-btns button{{flex:1;padding:11px;border-radius:10px;border:none;font-size:13px;font-weight:700;
+    cursor:pointer;font-family:inherit}}
+  .btn-cancel{{background:var(--surface2);color:var(--text);border:1px solid var(--border2) !important}}
+  .btn-confirm{{background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff}}
 </style>
 </head>
 <body>
@@ -6598,11 +6597,56 @@ def report_export_html():
     </div>
   </div>
 
-  <button class="dl-btn" id="dlBtn" onclick="doExport()">📥 دانلود اکسل</button>
+  <button class="dl-btn" id="dlBtn" onclick="openColumnModal()">📥 دانلود اکسل</button>
   <div class="hint">بازه‌ی تاریخ بر اساس تاریخ فایر شدن آلارم اعمال می‌شه. فیلترها با هم AND می‌شن.<br>
   ⓘ آلارم‌های فایرشده‌ی قبل از ۱۱ ژوئن ۲۰۲۶ («فایرشده (قدیمی)» تو ستون وضعیت) مربوط به قبل از راه‌اندازی سیستم «مسئول آلارم» هستن — برای این‌ها ستون‌های «مسئول» و «علت/تاریخ False» همیشه خالیه، چون اون‌موقع اصلاً همچین چیزی ثبت نمی‌شد. اگه فیلتر «مسئول» رو فعال کنید، این آلارم‌های قدیمی (چون مسئول ندارن) تو خروجی نمیان.</div>
 </div>
+
+<div class="modal-overlay" id="columnModal">
+  <div class="modal-box">
+    <h2>ستون‌های اکسل</h2>
+    <div class="modal-sub">هر ستونی رو نمی‌خواید تو خروجی باشه، تیکش رو بردارید.</div>
+    <div class="col-actions">
+      <button type="button" onclick="setAllColumns(true)">✅ انتخاب همه</button>
+      <button type="button" onclick="setAllColumns(false)">❌ پاک کردن همه</button>
+    </div>
+    <div class="col-list">
+      <label><input type="checkbox" class="colChk" value="symbol" checked> نماد</label>
+      <label><input type="checkbox" class="colChk" value="alarm_tag" checked> هشتک</label>
+      <label><input type="checkbox" class="colChk" value="direction" checked> جهت</label>
+      <label><input type="checkbox" class="colChk" value="target_price" checked> قیمت هدف</label>
+      <label><input type="checkbox" class="colChk" value="fired_price" checked> قیمت فایر</label>
+      <label><input type="checkbox" class="colChk" value="status" checked> وضعیت</label>
+      <label><input type="checkbox" class="colChk" value="created_by" checked> ثبت‌کننده</label>
+      <label><input type="checkbox" class="colChk" value="assigned_to" checked> مسئول</label>
+      <label><input type="checkbox" class="colChk" value="created_date" checked> تاریخ ثبت</label>
+      <label><input type="checkbox" class="colChk" value="created_time" checked> ساعت ثبت</label>
+      <label><input type="checkbox" class="colChk" value="fired_date" checked> تاریخ فایر</label>
+      <label><input type="checkbox" class="colChk" value="fired_time" checked> ساعت فایر</label>
+      <label><input type="checkbox" class="colChk" value="false_reason" checked> علت False</label>
+      <label><input type="checkbox" class="colChk" value="false_date" checked> تاریخ False</label>
+      <label><input type="checkbox" class="colChk" value="false_time" checked> ساعت False</label>
+      <label><input type="checkbox" class="colChk" value="expired_date" checked> تاریخ انقضا</label>
+      <label><input type="checkbox" class="colChk" value="expired_time" checked> ساعت انقضا</label>
+      <label><input type="checkbox" class="colChk" value="is_private" checked> خصوصی</label>
+      <label><input type="checkbox" class="colChk" value="comment" checked> کامنت</label>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeColumnModal()">انصراف</button>
+      <button class="btn-confirm" onclick="doExport()">📥 دانلود</button>
+    </div>
+  </div>
+</div>
 <script>
+function openColumnModal() {{
+  document.getElementById('columnModal').classList.add('show');
+}}
+function closeColumnModal() {{
+  document.getElementById('columnModal').classList.remove('show');
+}}
+function setAllColumns(val) {{
+  document.querySelectorAll('.colChk').forEach(c => c.checked = val);
+}}
 function doExport() {{
   const from = document.getElementById('expFrom').value;
   const to = document.getElementById('expTo').value;
@@ -6610,6 +6654,7 @@ function doExport() {{
   const assignees = Array.from(document.querySelectorAll('.assigneeChk:checked')).map(c => c.value).join(',');
   const creator = document.getElementById('expCreator').value.trim();
   const symbol = document.getElementById('expSymbol').value.trim();
+  const columns = Array.from(document.querySelectorAll('.colChk:checked')).map(c => c.value).join(',');
   const params = new URLSearchParams();
   if (from) params.set('from', from);
   if (to) params.set('to', to);
@@ -6617,7 +6662,9 @@ function doExport() {{
   if (assignees) params.set('assignees', assignees);
   if (creator) params.set('creator', creator);
   if (symbol) params.set('symbol', symbol);
+  if (columns) params.set('columns', columns);
   window.location.href = '/api/report/export.xlsx?' + params.toString();
+  closeColumnModal();
 }}
 </script>
 </body></html>"""
@@ -6804,47 +6851,71 @@ def report_export_xlsx():
             return parts[0], parts[1][:8]
         return parts[0], ""
 
+    # هر ستون یه کلید داره — پارامتر columns تو URL تعیین می‌کنه کدوما تو خروجی باشن
+    COLUMN_DEFS = [
+        ("symbol",       "نماد",         10),
+        ("alarm_tag",    "هشتک",         9),
+        ("direction",    "جهت",          6),
+        ("target_price", "قیمت هدف",     10),
+        ("fired_price",  "قیمت فایر",    10),
+        ("status",       "وضعیت",        11),
+        ("created_by",   "ثبت‌کننده",    12),
+        ("assigned_to",  "مسئول",        9),
+        ("created_date", "تاریخ ثبت",    11),
+        ("created_time", "ساعت ثبت",     9),
+        ("fired_date",   "تاریخ فایر",   11),
+        ("fired_time",   "ساعت فایر",    9),
+        ("false_reason", "علت False",    22),
+        ("false_date",   "تاریخ False",  11),
+        ("false_time",   "ساعت False",   9),
+        ("expired_date", "تاریخ انقضا",  11),
+        ("expired_time", "ساعت انقضا",   9),
+        ("is_private",   "خصوصی",        7),
+        ("comment",      "کامنت",        26),
+    ]
+    requested_cols = [c.strip() for c in request.args.get("columns", "").split(",") if c.strip()]
+    all_keys = [k for k, _, _ in COLUMN_DEFS]
+    selected_keys = [k for k in all_keys if (not requested_cols or k in requested_cols)]
+    label_by_key = {k: lbl for k, lbl, _ in COLUMN_DEFS}
+    width_by_key = {k: w for k, _, w in COLUMN_DEFS}
+
     wb = Workbook()
     ws = wb.active
     ws.title = "آلارم‌ها"
     ws.sheet_view.rightToLeft = True
-    headers = ["نماد","هشتک","جهت","قیمت هدف","قیمت فایر","وضعیت","ثبت‌کننده","مسئول",
-               "تاریخ ثبت","ساعت ثبت","تاریخ فایر","ساعت فایر","علت False",
-               "تاریخ False","ساعت False","تاریخ انقضا","ساعت انقضا","خصوصی","کامنت"]
-    ws.append(headers)
-    header_fill = PatternFill("solid", fgColor="1E293B")
+    ws.append([label_by_key[k] for k in selected_keys])
     for cell in ws[1]:
-        cell.font = Font(bold=True, color="FFFFFF")
-        cell.fill = header_fill
+        cell.font = Font(bold=True)
         cell.alignment = Alignment(horizontal="center")
+    ws.freeze_panes = "A2"
 
     for a, asg, status_lbl in final_rows:
         created_d, created_t = _split_dt(a.get("created_at",""))
         fired_d, fired_t = _split_dt(a.get("fired_at",""))
         false_d, false_t = _split_dt(asg.get("false_at",""))
         expired_d, expired_t = _split_dt(a.get("expired_at",""))
-        ws.append([
-            a.get("symbol",""),
-            asg.get("alarm_tag","") or "",
-            "بای" if a.get("condition") == "below" else "سل",
-            a.get("target_price",""),
-            a.get("fired_price","") or "",
-            status_lbl,
-            a.get("created_by",""),
-            asg.get("assigned_to","") or "",
-            created_d, created_t,
-            fired_d, fired_t,
-            asg.get("false_reason","") or "",
-            false_d, false_t,
-            expired_d, expired_t,
-            "بله" if a.get("is_private") else "",
-            a.get("comment",""),
-        ])
+        values_by_key = {
+            "symbol":       a.get("symbol",""),
+            "alarm_tag":    asg.get("alarm_tag","") or "",
+            "direction":    "بای" if a.get("condition") == "below" else "سل",
+            "target_price": a.get("target_price",""),
+            "fired_price":  a.get("fired_price","") or "",
+            "status":       status_lbl,
+            "created_by":   a.get("created_by",""),
+            "assigned_to":  asg.get("assigned_to","") or "",
+            "created_date": created_d, "created_time": created_t,
+            "fired_date":   fired_d,   "fired_time":   fired_t,
+            "false_reason": asg.get("false_reason","") or "",
+            "false_date":   false_d,   "false_time":   false_t,
+            "expired_date": expired_d, "expired_time": expired_t,
+            "is_private":   "بله" if a.get("is_private") else "",
+            "comment":      a.get("comment",""),
+        }
+        ws.append([values_by_key[k] for k in selected_keys])
 
     from openpyxl.utils import get_column_letter
-    widths = [12,10,7,11,11,11,13,10,11,9,11,9,22,11,9,11,9,8,26]
-    for i, w in enumerate(widths, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = w
+    for i, k in enumerate(selected_keys, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width_by_key[k]
 
     import io
     buf = io.BytesIO()
