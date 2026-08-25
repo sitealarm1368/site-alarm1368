@@ -7,6 +7,12 @@ import re
 app = Flask(__name__, static_folder='static')
 VERSION = "8.0"
 
+try:
+    import sva_report
+except Exception as _sva_import_err:
+    sva_report = None
+    _SVA_IMPORT_ERROR = str(_sva_import_err)
+
 TEHRAN = pytz.timezone("Asia/Tehran")
 
 # ==================== متغیرهای محیطی ====================
@@ -5942,6 +5948,18 @@ def _restore_notified():
     except Exception as e:
         print(f"[STARTUP] notified restore error: {e}")
 _restore_notified()
+
+@app.route("/sva-report")
+def sva_report_page():
+    """گزارش زنده‌ی SVA — مستقیم از گوگل‌شیت خونده و رندر می‌شه."""
+    if sva_report is None:
+        return f"ماژول sva_report لود نشد: {_SVA_IMPORT_ERROR}", 500
+    try:
+        html = sva_report.build_report_html()
+        return html
+    except Exception as e:
+        return f"<pre style='direction:ltr;color:#f04060;background:#080C10;padding:20px'>خطا در ساخت گزارش SVA:\n{e}</pre>", 500
+
 
 @app.route("/report/weekly")
 def report_weekly_html():
