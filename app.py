@@ -7,12 +7,6 @@ import re
 app = Flask(__name__, static_folder='static')
 VERSION = "8.0"
 
-try:
-    import sva_report
-except Exception as _sva_import_err:
-    sva_report = None
-    _SVA_IMPORT_ERROR = str(_sva_import_err)
-
 TEHRAN = pytz.timezone("Asia/Tehran")
 
 # ==================== متغیرهای محیطی ====================
@@ -5951,14 +5945,12 @@ _restore_notified()
 
 @app.route("/sva-report")
 def sva_report_page():
-    """گزارش زنده‌ی SVA — مستقیم از گوگل‌شیت خونده و رندر می‌شه."""
-    if sva_report is None:
-        return f"ماژول sva_report لود نشد: {_SVA_IMPORT_ERROR}", 500
-    try:
-        html = sva_report.build_report_html()
-        return html
-    except Exception as e:
-        return f"<pre style='direction:ltr;color:#f04060;background:#080C10;padding:20px'>خطا در ساخت گزارش SVA:\n{e}</pre>", 500
+    """
+    گزارش SVA — همون فایل ثابتی که دستی (با تحلیل کامل) ساخته و تأیید شده.
+    هر بار که داده‌ی جدید بیاد، این فایل static/sva-report.html جایگزین می‌شه و push می‌خوریم؛
+    این مسیر همیشه آخرین نسخه‌ای که منتشر شده رو نشون می‌ده.
+    """
+    return send_from_directory(app.static_folder, "sva-report.html")
 
 
 @app.route("/report/weekly")
