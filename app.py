@@ -4826,8 +4826,8 @@ def _do_update(upd, token):
 notified = set()
 _deleted_ids: set = set()  # آلارم‌هایی که پاک شدن — دیگه fire نشن
 _loop_count = 0
-# حلقه‌ی live price هر ۲ دقیقه یک بار اجرا می‌شود.
-CHECK_INTERVAL_SECONDS = 120
+# حلقه‌ی live price هر ۱ دقیقه یک بار اجرا می‌شود.
+CHECK_INTERVAL_SECONDS = 60
 # refresh آلارم‌های فعال از Supabase هر ۵ دور = حدود ۱۰ دقیقه یک بار.
 ACTIVE_REFRESH_EVERY_LOOPS = 5
 
