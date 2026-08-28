@@ -84,6 +84,17 @@ footer{text-align:center;color:var(--muted2);font-size:11px;font-family:var(--fm
 #equitySummary{font-family:var(--fmono);font-size:12px;color:var(--muted);margin-top:8px;text-align:center}
 .trend-bar{background:var(--panel2);border-radius:4px;height:16px;width:100%;position:relative;overflow:hidden}
 .trend-bar-fill{position:absolute;top:0;height:100%;border-radius:4px}
+
+.weekly-charts{display:grid;grid-template-columns:1fr;gap:10px;margin:14px 0}
+@media(min-width:900px){.weekly-charts{grid-template-columns:1fr 1fr}}
+.weekly-charts .wc-full{grid-column:1/-1}
+.wc-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px}
+.wc-panel h4{font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700}
+.wc-legend{display:flex;gap:10px;font-size:10px;font-family:var(--fmono);color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.wc-legend span{display:inline-flex;align-items:center;gap:4px}
+.wc-legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+
+.person-head{position:sticky;top:0;z-index:5;background:var(--bg,#080C10);padding-top:6px;padding-bottom:6px}
 </style>
 </head>
 <body>
@@ -769,6 +780,25 @@ applyFilters();
     <h2>مسعود (Massoud_fe)</h2>
     <div class="meta">کل 185 · M15: 97 · H1: 88</div>
   </div>
+  
+  <div class="weekly-charts">
+    <div class="wc-panel"><h4>روند هفتگی — فقط M15 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-massoud-m15" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel"><h4>روند هفتگی — فقط H1 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-massoud-h1" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel wc-full"><h4>روند هفتگی — ترکیبی M15 + H1 پشت‌سرهم (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-massoud-combined" viewBox="0 0 700 180" style="width:100%;height:180px" preserveAspectRatio="none"></svg>
+      <div class="wc-legend">
+        <span><i style="background:#5B9BFF"></i>1R</span>
+        <span><i style="background:#E8B340"></i>1.5R</span>
+        <span><i style="background:#1FCE6B"></i>2R</span>
+        <span><i style="background:#F04060"></i>3R</span>
+      </div>
+    </div>
+  </div>
+
   <div class="stat-row">
     <div class="sc"><div class="sc-lbl">@1R</div><div class="sc-val g">58.4%</div><div class="sc-sub">exp +0.17 · 108/185</div></div>
     <div class="sc"><div class="sc-lbl">@1.5R</div><div class="sc-val g">44.3%</div><div class="sc-sub">exp +0.11 · 82/185</div></div>
@@ -927,6 +957,25 @@ applyFilters();
     <h2>پیمان (Peyman)</h2>
     <div class="meta">کل 305 · M15: 159 · H1: 146</div>
   </div>
+  
+  <div class="weekly-charts">
+    <div class="wc-panel"><h4>روند هفتگی — فقط M15 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-peyman-m15" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel"><h4>روند هفتگی — فقط H1 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-peyman-h1" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel wc-full"><h4>روند هفتگی — ترکیبی M15 + H1 پشت‌سرهم (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-peyman-combined" viewBox="0 0 700 180" style="width:100%;height:180px" preserveAspectRatio="none"></svg>
+      <div class="wc-legend">
+        <span><i style="background:#5B9BFF"></i>1R</span>
+        <span><i style="background:#E8B340"></i>1.5R</span>
+        <span><i style="background:#1FCE6B"></i>2R</span>
+        <span><i style="background:#F04060"></i>3R</span>
+      </div>
+    </div>
+  </div>
+
   <div class="stat-row">
     <div class="sc"><div class="sc-lbl">@1R</div><div class="sc-val g">55.7%</div><div class="sc-sub">exp +0.11 · 170/305</div></div>
     <div class="sc"><div class="sc-lbl">@1.5R</div><div class="sc-val g">48.9%</div><div class="sc-sub">exp +0.22 · 149/305</div></div>
@@ -1085,6 +1134,25 @@ applyFilters();
     <h2>علی (Ali)</h2>
     <div class="meta">کل 189 · M15: 96 · H1: 93</div>
   </div>
+  
+  <div class="weekly-charts">
+    <div class="wc-panel"><h4>روند هفتگی — فقط M15 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-ali-m15" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel"><h4>روند هفتگی — فقط H1 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-ali-h1" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel wc-full"><h4>روند هفتگی — ترکیبی M15 + H1 پشت‌سرهم (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-ali-combined" viewBox="0 0 700 180" style="width:100%;height:180px" preserveAspectRatio="none"></svg>
+      <div class="wc-legend">
+        <span><i style="background:#5B9BFF"></i>1R</span>
+        <span><i style="background:#E8B340"></i>1.5R</span>
+        <span><i style="background:#1FCE6B"></i>2R</span>
+        <span><i style="background:#F04060"></i>3R</span>
+      </div>
+    </div>
+  </div>
+
   <div class="stat-row">
     <div class="sc"><div class="sc-lbl">@1R</div><div class="sc-val g">58.7%</div><div class="sc-sub">exp +0.17 · 111/189</div></div>
     <div class="sc"><div class="sc-lbl">@1.5R</div><div class="sc-val g">46.0%</div><div class="sc-sub">exp +0.15 · 87/189</div></div>
@@ -1243,6 +1311,25 @@ applyFilters();
     <h2>مهران (Mehran)</h2>
     <div class="meta">کل 116 · M15: 62 · H1: 54</div>
   </div>
+  
+  <div class="weekly-charts">
+    <div class="wc-panel"><h4>روند هفتگی — فقط M15 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-mehran-m15" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel"><h4>روند هفتگی — فقط H1 (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-mehran-h1" viewBox="0 0 700 180" style="width:100%;height:150px" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="wc-panel wc-full"><h4>روند هفتگی — ترکیبی M15 + H1 پشت‌سرهم (تجمعی، پایه ۱۰$)</h4>
+      <svg id="wc-mehran-combined" viewBox="0 0 700 180" style="width:100%;height:180px" preserveAspectRatio="none"></svg>
+      <div class="wc-legend">
+        <span><i style="background:#5B9BFF"></i>1R</span>
+        <span><i style="background:#E8B340"></i>1.5R</span>
+        <span><i style="background:#1FCE6B"></i>2R</span>
+        <span><i style="background:#F04060"></i>3R</span>
+      </div>
+    </div>
+  </div>
+
   <div class="stat-row">
     <div class="sc"><div class="sc-lbl">@1R</div><div class="sc-val g">60.3%</div><div class="sc-sub">exp +0.21 · 70/116</div></div>
     <div class="sc"><div class="sc-lbl">@1.5R</div><div class="sc-val g">48.3%</div><div class="sc-sub">exp +0.21 · 56/116</div></div>
@@ -1410,6 +1497,54 @@ function showTab(id, btn) {
   btn.classList.add('active');
   window.scrollTo(0,0);
 }
+</script>
+
+<script>
+const PERSON_WEEKLY = {"Massoud": {"m15": {"weeks": ["2026-04-27", "2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [10.0, 10.0, 10.0, 40.0, 70.0, 110.0, 130.0, 140.0, 180.0, 220.0, 210.0, 150.0, 170.0, 260.0, 280.0, 300.0, 250.0], "r15": [15.0, 15.0, 20.0, 70.0, 120.0, 165.0, 210.0, 225.0, 210.0, 275.0, 260.0, 215.0, 255.0, 205.0, 190.0, 225.0, 155.0], "r2": [20.0, 20.0, 30.0, 70.0, 110.0, 180.0, 220.0, 240.0, 230.0, 290.0, 290.0, 260.0, 290.0, 230.0, 190.0, 210.0, 140.0], "r3": [-10.0, -10.0, -30.0, 40.0, 70.0, 150.0, 110.0, 140.0, 100.0, 120.0, 150.0, 150.0, 210.0, 140.0, 100.0, 140.0, 70.0]}}, "h1": {"weeks": ["2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [10.0, 30.0, 10.0, 30.0, 20.0, 20.0, 30.0, 60.0, 80.0, 90.0, 80.0, 70.0, 70.0, 60.0, 40.0], "r15": [-10.0, 5.0, -5.0, 15.0, -15.0, -10.0, 10.0, 35.0, 60.0, 95.0, 55.0, 45.0, 55.0, 55.0, 40.0], "r2": [-10.0, -10.0, -10.0, 30.0, 0.0, 10.0, 40.0, 50.0, 100.0, 130.0, 100.0, 110.0, 100.0, 80.0, 70.0], "r3": [-10.0, -30.0, -50.0, -10.0, -40.0, -20.0, 30.0, 60.0, 40.0, 70.0, 20.0, -50.0, -90.0, -140.0, -140.0]}}, "combined": {"weeks": ["2026-04-27", "2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [10.0, 10.0, 20.0, 70.0, 80.0, 140.0, 150.0, 160.0, 210.0, 280.0, 290.0, 240.0, 250.0, 330.0, 350.0, 360.0, 290.0], "r15": [15.0, 15.0, 10.0, 75.0, 115.0, 180.0, 195.0, 215.0, 220.0, 310.0, 320.0, 310.0, 310.0, 250.0, 245.0, 280.0, 195.0], "r2": [20.0, 20.0, 20.0, 60.0, 100.0, 210.0, 220.0, 250.0, 270.0, 340.0, 390.0, 390.0, 390.0, 340.0, 290.0, 290.0, 210.0], "r3": [-10.0, -10.0, -40.0, 10.0, 20.0, 140.0, 70.0, 120.0, 130.0, 180.0, 190.0, 220.0, 230.0, 90.0, 10.0, 0.0, -70.0]}}}, "Peyman": {"m15": {"weeks": ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"], "curves": {"r1": [0.0, 10.0, 20.0, 70.0, 100.0, 130.0, 190.0, 160.0, 120.0, 180.0, 220.0, 210.0, 230.0, 240.0, 240.0, 230.0, 240.0], "r15": [5.0, 35.0, 15.0, 125.0, 180.0, 205.0, 295.0, 265.0, 235.0, 315.0, 420.0, 430.0, 405.0, 440.0, 455.0, 395.0, 385.0], "r2": [10.0, 30.0, 20.0, 70.0, 120.0, 160.0, 270.0, 240.0, 220.0, 340.0, 450.0, 420.0, 350.0, 350.0, 380.0, 290.0, 280.0], "r3": [20.0, 30.0, 40.0, 130.0, 180.0, 210.0, 370.0, 340.0, 300.0, 460.0, 640.0, 630.0, 570.0, 520.0, 540.0, 450.0, 440.0]}}, "h1": {"weeks": ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"], "curves": {"r1": [20.0, 20.0, 10.0, 10.0, 100.0, 100.0, 180.0, 170.0, 170.0, 140.0, 150.0, 180.0, 110.0, 130.0, 140.0, 130.0, 140.0], "r15": [35.0, 45.0, 25.0, 0.0, 130.0, 125.0, 230.0, 230.0, 250.0, 240.0, 265.0, 320.0, 260.0, 280.0, 285.0, 275.0, 290.0], "r2": [50.0, 70.0, 30.0, 20.0, 180.0, 160.0, 250.0, 260.0, 270.0, 280.0, 340.0, 420.0, 370.0, 410.0, 430.0, 410.0, 430.0], "r3": [80.0, 120.0, 50.0, -10.0, 220.0, 220.0, 260.0, 250.0, 290.0, 300.0, 390.0, 520.0, 490.0, 530.0, 460.0, 430.0, 460.0]}}, "combined": {"weeks": ["2026-05-04", "2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"], "curves": {"r1": [20.0, 30.0, 30.0, 80.0, 200.0, 230.0, 370.0, 330.0, 290.0, 320.0, 370.0, 390.0, 340.0, 370.0, 380.0, 360.0, 380.0], "r15": [40.0, 80.0, 40.0, 125.0, 310.0, 330.0, 525.0, 495.0, 485.0, 555.0, 685.0, 750.0, 665.0, 720.0, 740.0, 670.0, 675.0], "r2": [60.0, 100.0, 50.0, 90.0, 300.0, 320.0, 520.0, 500.0, 490.0, 620.0, 790.0, 840.0, 720.0, 760.0, 810.0, 700.0, 710.0], "r3": [100.0, 150.0, 90.0, 120.0, 400.0, 430.0, 630.0, 590.0, 590.0, 760.0, 1030.0, 1150.0, 1060.0, 1050.0, 1000.0, 880.0, 900.0]}}}, "Ali": {"m15": {"weeks": ["2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [-10.0, -10.0, 30.0, 70.0, 110.0, 130.0, 220.0, 260.0, 240.0, 230.0, 260.0, 250.0, 270.0], "r15": [-10.0, -10.0, 55.0, 120.0, 170.0, 205.0, 250.0, 295.0, 275.0, 285.0, 335.0, 325.0, 305.0], "r2": [-10.0, -10.0, 50.0, 100.0, 60.0, 110.0, 190.0, 260.0, 240.0, 290.0, 300.0, 290.0, 260.0], "r3": [-10.0, -10.0, 90.0, 210.0, 110.0, 150.0, 140.0, 260.0, 240.0, 330.0, 320.0, 310.0, 310.0]}}, "h1": {"weeks": ["2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [10.0, 10.0, 0.0, 10.0, 20.0, 10.0, -10.0, -10.0, 0.0, 40.0, 30.0, 40.0, 100.0, 110.0, 70.0], "r15": [15.0, 15.0, 5.0, 20.0, 20.0, -5.0, -25.0, -40.0, -55.0, -10.0, -15.0, -40.0, -20.0, -5.0, -35.0], "r2": [20.0, 20.0, 10.0, 30.0, 10.0, -20.0, -80.0, -90.0, -90.0, -80.0, -80.0, -80.0, -40.0, -20.0, -70.0], "r3": [30.0, 30.0, 20.0, 50.0, 40.0, 50.0, -30.0, -30.0, -40.0, 0.0, 10.0, -20.0, -20.0, -30.0, -70.0]}}, "combined": {"weeks": ["2026-05-11", "2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [10.0, 10.0, -10.0, 0.0, 50.0, 80.0, 100.0, 120.0, 220.0, 300.0, 270.0, 270.0, 360.0, 360.0, 340.0], "r15": [15.0, 15.0, -5.0, 10.0, 75.0, 115.0, 145.0, 165.0, 195.0, 285.0, 260.0, 245.0, 315.0, 320.0, 270.0], "r2": [20.0, 20.0, 0.0, 20.0, 60.0, 80.0, -20.0, 20.0, 100.0, 180.0, 160.0, 210.0, 260.0, 270.0, 190.0], "r3": [30.0, 30.0, 10.0, 40.0, 130.0, 260.0, 80.0, 120.0, 100.0, 260.0, 250.0, 310.0, 300.0, 280.0, 240.0]}}}, "Mehran": {"m15": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17"], "curves": {"r1": [0.0, 20.0, 40.0, 10.0, 20.0, 30.0, 50.0, 80.0, 80.0, 80.0, 70.0, 80.0, 80.0, 100.0], "r15": [5.0, 35.0, 65.0, 25.0, -30.0, -10.0, 5.0, 55.0, 70.0, 75.0, 65.0, 80.0, 65.0, 105.0], "r2": [-20.0, 20.0, 60.0, 30.0, -70.0, -70.0, -70.0, 0.0, 30.0, 10.0, 0.0, 20.0, 10.0, 40.0], "r3": [-20.0, 0.0, 20.0, -70.0, -160.0, -150.0, -130.0, -20.0, -40.0, -60.0, -70.0, -40.0, -40.0, 20.0]}}, "h1": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"], "curves": {"r1": [20.0, 20.0, 30.0, 50.0, 30.0, 60.0, 80.0, 120.0, 130.0, 130.0, 140.0, 150.0, 140.0, 150.0, 160.0], "r15": [30.0, 10.0, 25.0, 40.0, 40.0, 15.0, 50.0, 115.0, 140.0, 145.0, 135.0, 150.0, 145.0, 140.0, 155.0], "r2": [10.0, -10.0, -20.0, 10.0, 30.0, 10.0, 30.0, 120.0, 160.0, 170.0, 160.0, 180.0, 180.0, 150.0, 170.0], "r3": [20.0, 0.0, -10.0, -30.0, 30.0, 20.0, 20.0, 80.0, 70.0, 90.0, 80.0, 110.0, 120.0, 90.0, 120.0]}}, "combined": {"weeks": ["2026-05-18", "2026-05-25", "2026-06-01", "2026-06-08", "2026-06-15", "2026-06-22", "2026-06-29", "2026-07-06", "2026-07-13", "2026-07-20", "2026-07-27", "2026-08-03", "2026-08-10", "2026-08-17", "2026-08-24"], "curves": {"r1": [20.0, 40.0, 70.0, 60.0, 50.0, 90.0, 130.0, 200.0, 210.0, 210.0, 210.0, 230.0, 220.0, 250.0, 260.0], "r15": [35.0, 45.0, 90.0, 65.0, 10.0, 5.0, 55.0, 170.0, 210.0, 220.0, 200.0, 230.0, 210.0, 245.0, 260.0], "r2": [-10.0, 10.0, 40.0, 40.0, -40.0, -60.0, -40.0, 120.0, 190.0, 180.0, 160.0, 200.0, 190.0, 190.0, 210.0], "r3": [0.0, 0.0, 10.0, -100.0, -130.0, -130.0, -110.0, 60.0, 30.0, 30.0, 10.0, 70.0, 80.0, 110.0, 140.0]}}}};
+
+const WC_COLORS = {r1:'#5B9BFF', r15:'#E8B340', r2:'#1FCE6B', r3:'#F04060'};
+const WC_LABELS = {r1:'1R', r15:'1.5R', r2:'2R', r3:'3R'};
+
+function renderWeeklyChart(svgId, weekData) {
+  const svg = document.getElementById(svgId);
+  if (!svg) return;
+  const weeks = weekData.weeks;
+  if (!weeks || weeks.length < 2) {
+    svg.parentElement.innerHTML = '<p style="font-size:11px;color:var(--muted2);text-align:center;padding:20px 0">داده‌ی کافی برای این بازه نیست</p>';
+    return;
+  }
+  const n = weeks.length;
+  const w = 700, h = 180, pad = 8;
+  let allVals = [];
+  Object.values(weekData.curves).forEach(c => allVals = allVals.concat(c));
+  const minV = Math.min(0, ...allVals);
+  const maxV = Math.max(0, ...allVals);
+  const range = (maxV - minV) || 1;
+  const x = i => pad + (i/(n-1)) * (w - 2*pad);
+  const y = v => h - pad - ((v - minV)/range) * (h - 2*pad);
+  const zeroY = y(0).toFixed(1);
+  let html = '<line x1="'+pad+'" y1="'+zeroY+'" x2="'+(w-pad)+'" y2="'+zeroY+'" stroke="var(--border)" stroke-dasharray="4,4"/>';
+  ['r1','r15','r2','r3'].forEach(level => {
+    const curve = weekData.curves[level];
+    let path = '';
+    curve.forEach((v,i) => { path += (i===0?'M':'L') + x(i).toFixed(1) + ',' + y(v).toFixed(1) + ' '; });
+    html += '<path d="'+path+'" fill="none" stroke="'+WC_COLORS[level]+'" stroke-width="2"/>';
+  });
+  svg.innerHTML = html;
+}
+
+function initPersonWeeklyCharts(personKey, prefix) {
+  const d = PERSON_WEEKLY[personKey];
+  if (!d) return;
+  renderWeeklyChart(prefix+'-m15', d.m15);
+  renderWeeklyChart(prefix+'-h1', d.h1);
+  renderWeeklyChart(prefix+'-combined', d.combined);
+}
+
+initPersonWeeklyCharts('Massoud','wc-massoud');
+initPersonWeeklyCharts('Peyman','wc-peyman');
+initPersonWeeklyCharts('Ali','wc-ali');
+initPersonWeeklyCharts('Mehran','wc-mehran');
 </script>
 </body>
 </html>
