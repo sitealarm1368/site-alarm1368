@@ -1690,8 +1690,9 @@ def format_ff_message(events):
 
 
 def daily_news_scheduler():
-    """هر روز سر ساعت NEWS_HOUR تهران اخبار می‌فرسته"""
+    """هر روز سر ساعت NEWS_HOUR تهران اخبار می‌فرسته + ۱۵ دقیقه قبل از هر خبر قرمز هشدار می‌فرسته"""
     sent_today = None
+    global _today_red_events, _today_red_events_date, _news_reminder_sent
     while True:
         try:
             now = datetime.now(TEHRAN)
@@ -1708,9 +1709,52 @@ def daily_news_scheduler():
                     broadcast(token, cids, msg)
                     sent_today = today
                     print(f"[news] ارسال شد — {len(events or [])} رویداد")
+                    # فقط اخبار قرمز (impact بالا) رو برای هشدار ۱۵ دقیقه‌ای نگه می‌داریم
+                    _today_red_events = [ev for ev in (events or []) if ev.get("impact","").lower() in ("high","3")]
+                    _today_red_events_date = today
+                    _news_reminder_sent = set()
+
+            _check_news_reminders(now)
         except Exception as e:
             print(f"[news_scheduler] {e}")
         time.sleep(50)
+
+
+_today_red_events = []
+_today_red_events_date = None
+_news_reminder_sent = set()
+
+def _check_news_reminders(now):
+    """۱۵ دقیقه قبل از هر خبر قرمزِ امروز، یه هشدار به تیم می‌فرسته."""
+    global _news_reminder_sent
+    if _today_red_events_date != now.date() or not _today_red_events:
+        return
+    for ev in _today_red_events:
+        time_teh = ev.get("time_teh")
+        if not time_teh or ":" not in time_teh:
+            continue
+        key = (now.date(), ev.get("title",""), time_teh)
+        if key in _news_reminder_sent:
+            continue
+        try:
+            hh, mm = map(int, time_teh.split(":"))
+            ev_dt = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        except Exception:
+            continue
+        reminder_dt = ev_dt - timedelta(minutes=15)
+        if reminder_dt <= now < reminder_dt + timedelta(seconds=60):
+            token, cids, _ = _get_token_and_cids()
+            if token and cids:
+                msg = (
+                    "🚨🔴⚠️🚨 هشدار خبر مهم 🚨⚠️🔴🚨\n\n"
+                    f"📅 {ev.get('title','—')}\n"
+                    f"⏰ ۱۵ دقیقه دیگر ({time_teh})\n\n"
+                    "❗️ با توجه به پلن، تریدهای باز داخل حساب باید مدیریت شوند.\n\n"
+                    "🔔 لطفاً هرکی این پیام رو می‌بینه به این مورد توجه کنه 🙏"
+                )
+                broadcast(token, cids, msg)
+                print(f"[news_reminder] ارسال شد — {ev.get('title')} ساعت {time_teh}")
+            _news_reminder_sent.add(key)
 
 _pending_name  = {}  # cid → True
 _pending_alarm = {}  # cid → {"step": str, "data": dict}
