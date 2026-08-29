@@ -170,6 +170,37 @@ def _sb_save_deprioritize_masoud(value: bool):
     except Exception as e:
         print(f"[assign] save deprioritize_masoud exc: {e}")
 
+def _sb_load_news_reminder_state() -> dict:
+    """وضعیت هشدار ۱۵ دقیقه‌ای اخبار قرمز رو می‌خونه — {date, events, sent} —
+    نیازمند یه ستون jsonb به اسم news_reminder_state روی ردیف __config__ جدول alerts.
+    اگه ستون هنوز ساخته نشده یا خالیه، دیکشنری خالی برمی‌گردونه (fallback به حافظه‌ی موقت)."""
+    if not SUPABASE_KEY:
+        return {}
+    try:
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__&select=news_reminder_state",
+            headers=_sb_h(), timeout=8)
+        if r.status_code == 200:
+            rows = r.json()
+            if rows and rows[0].get("news_reminder_state") is not None:
+                val = rows[0]["news_reminder_state"]
+                return val if isinstance(val, dict) else json.loads(val)
+    except Exception as e:
+        print(f"[news] load news_reminder_state exc: {e}")
+    return {}
+
+def _sb_save_news_reminder_state(state: dict):
+    """فقط همین یک فیلد رو patch می‌کنه — با upsert_config تداخل نداره"""
+    if not SUPABASE_KEY:
+        return
+    try:
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__",
+            headers={**_sb_h(), "Prefer": "return=minimal"},
+            json={"news_reminder_state": state}, timeout=8)
+    except Exception as e:
+        print(f"[news] save news_reminder_state exc: {e}")
+
 def _sb_load_unavailable_members() -> list:
     """اسم اعضایی که موقتاً از چرخه‌ی تقسیم آلارم کنار گذاشته شدن (مرخصی/غیره) —
     پیش‌فرض لیست خالی (یعنی همه در دسترسن) اگه چیزی پیدا نشد. نیازمند یه ستون
@@ -1693,6 +1724,17 @@ def daily_news_scheduler():
     """هر روز سر ساعت NEWS_HOUR تهران اخبار می‌فرسته + ۱۵ دقیقه قبل از هر خبر قرمز هشدار می‌فرسته"""
     sent_today = None
     global _today_red_events, _today_red_events_date, _news_reminder_sent
+    # موقع استارت، وضعیت رو از Supabase بازیابی کن (اگه اپ ری‌استارت شده باشه)
+    try:
+        saved = _sb_load_news_reminder_state()
+        if saved.get("date") == datetime.now(TEHRAN).strftime("%Y-%m-%d"):
+            _today_red_events = saved.get("events", [])
+            _today_red_events_date = datetime.now(TEHRAN).date()
+            _news_reminder_sent = set(tuple(k) for k in saved.get("sent", []))
+            print(f"[news] وضعیت هشدار از Supabase بازیابی شد — {len(_today_red_events)} خبر قرمز")
+    except Exception as e:
+        print(f"[news] بازیابی وضعیت ناموفق: {e}")
+
     while True:
         try:
             now = datetime.now(TEHRAN)
@@ -1713,6 +1755,11 @@ def daily_news_scheduler():
                     _today_red_events = [ev for ev in (events or []) if ev.get("impact","").lower() in ("high","3")]
                     _today_red_events_date = today
                     _news_reminder_sent = set()
+                    _sb_save_news_reminder_state({
+                        "date": today.strftime("%Y-%m-%d"),
+                        "events": _today_red_events,
+                        "sent": [],
+                    })
 
             _check_news_reminders(now)
         except Exception as e:
@@ -1733,7 +1780,7 @@ def _check_news_reminders(now):
         time_teh = ev.get("time_teh")
         if not time_teh or ":" not in time_teh:
             continue
-        key = (now.date(), ev.get("title",""), time_teh)
+        key = (now.date().strftime("%Y-%m-%d"), ev.get("title",""), time_teh)
         if key in _news_reminder_sent:
             continue
         try:
@@ -1755,6 +1802,11 @@ def _check_news_reminders(now):
                 broadcast(token, cids, msg)
                 print(f"[news_reminder] ارسال شد — {ev.get('title')} ساعت {time_teh}")
             _news_reminder_sent.add(key)
+            _sb_save_news_reminder_state({
+                "date": now.date().strftime("%Y-%m-%d"),
+                "events": _today_red_events,
+                "sent": [list(k) for k in _news_reminder_sent],
+            })
 
 _pending_name  = {}  # cid → True
 _pending_alarm = {}  # cid → {"step": str, "data": dict}
