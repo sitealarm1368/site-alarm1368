@@ -1752,7 +1752,9 @@ def daily_news_scheduler():
                     sent_today = today
                     print(f"[news] ارسال شد — {len(events or [])} رویداد")
                     # فقط اخبار قرمز (impact بالا) رو برای هشدار ۱۵ دقیقه‌ای نگه می‌داریم
-                    _today_red_events = [ev for ev in (events or []) if ev.get("impact","").lower() in ("high","3")]
+                    _today_red_events = [ev for ev in (events or [])
+                                          if ev.get("impact","").lower() in ("high","3")
+                                          and ev.get("country","").upper() == "USD"]
                     _today_red_events_date = today
                     _news_reminder_sent = set()
                     _sb_save_news_reminder_state({
