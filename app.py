@@ -4926,6 +4926,8 @@ _deleted_ids: set = set()  # آلارم‌هایی که پاک شدن — دیگ
 _loop_count = 0
 # حلقه‌ی live price هر ۱ دقیقه یک بار اجرا می‌شود.
 CHECK_INTERVAL_SECONDS = 60
+# ⏸️ موقت: نمادهایی که آلارمشون فایر می‌شه ولی پیام تلگرام نمی‌فرستیم (فقط طلا، فعلاً)
+TEMP_MUTED_SYMBOLS = {"XAUUSD"}
 # refresh آلارم‌های فعال از Supabase هر ۵ دور = حدود ۱۰ دقیقه یک بار.
 ACTIVE_REFRESH_EVERY_LOOPS = 5
 
@@ -5129,7 +5131,10 @@ def check_alerts():
                     # 🔒 فوری و سینک قبل از هرکاری (ارسال پیام/تعیین مسئول) تو Supabase ذخیره می‌کنیم —
                     # تا اگه سرور وسط ارسال پیام‌ها کرش/ریستارت کرد، این آلارم already-fired بمونه و دوباره فایر نشه
                     save_alert_fired(a)
-                    if token and cids:
+                    # ⏸️ موقت: آلارم طلا (XAUUSD) فایر می‌شه و ثبت می‌شه، فقط پیام تلگرام ارسال نشه
+                    if sym.upper() in TEMP_MUTED_SYMBOLS:
+                        print(f"[FILTER] {sym} در لیست موقت بی‌صدا — پیام تلگرام ارسال نشد")
+                    elif token and cids:
                         comment = a.get("comment", "")
                         if str(YOUR_CHAT_ID) in str(comment):
                             notify_cids = [str(YOUR_CHAT_ID)]
