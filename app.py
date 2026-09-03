@@ -3776,11 +3776,12 @@ def _do_update(upd, token):
                         def _bg_sos(tok=token_cbq, tgts=targets_sc, msg=out_sc, s=sym_sc, aid=sos_aid,
                                     atag=alarm_num_tag_sc, sndr=sender_sc, cond=condition_sc, atp=atype_sc, cur=cur_sc):
                             sos_cid_to_mid = {}
-                            for tc_sc in tgts:
-                                kb_sc = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc_sc}:{s}"}]]
-                                mid_sc = send_tg_keyboard(tok, str(tc_sc), msg, kb_sc, track=False)
-                                if mid_sc:
-                                    sos_cid_to_mid[str(tc_sc)] = mid_sc
+                            if s.upper() not in TEMP_MUTED_SYMBOLS:
+                                for tc_sc in tgts:
+                                    kb_sc = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc_sc}:{s}"}]]
+                                    mid_sc = send_tg_keyboard(tok, str(tc_sc), msg, kb_sc, track=False)
+                                    if mid_sc:
+                                        sos_cid_to_mid[str(tc_sc)] = mid_sc
                             if sos_cid_to_mid:
                                 sos_cid_to_mid["__tag__"] = atag
                                 sos_cid_to_mid["__text__"] = msg
@@ -4618,9 +4619,10 @@ def _do_update(upd, token):
                                 + (f"💬 {comment_s}\n" if comment_s else "")
                                 + f"⏰ {now_pretty()} (تهران)", [])
                         # broadcast به بقیه
-                        for tc2 in targets2:
-                            kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
-                            send_tg_keyboard(token, str(tc2), out_s, kb2, track=False)
+                        if sym_s.upper() not in TEMP_MUTED_SYMBOLS:
+                            for tc2 in targets2:
+                                kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
+                                send_tg_keyboard(token, str(tc2), out_s, kb2, track=False)
 
                     elif step == "broadcast_text":
                         _, all_cids3, _ = _get_token_and_cids()
@@ -4740,12 +4742,13 @@ def _do_update(upd, token):
                         targets = all_cids if BROADCAST_MODE else [YOUR_CHAT_ID]
                         sos_aid_txt = f"sos_{sym}_{int(time.time())}"
                         sos_cid_to_mid_txt = {}
-                        for tc in targets:
-                            mid_sos_txt = send_tg_keyboard(token, tc, out_msg,
-                                [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc}:{sym}"}]],
-                                track=False)
-                            if mid_sos_txt:
-                                sos_cid_to_mid_txt[str(tc)] = mid_sos_txt
+                        if sym.upper() not in TEMP_MUTED_SYMBOLS:
+                            for tc in targets:
+                                mid_sos_txt = send_tg_keyboard(token, tc, out_msg,
+                                    [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc}:{sym}"}]],
+                                    track=False)
+                                if mid_sos_txt:
+                                    sos_cid_to_mid_txt[str(tc)] = mid_sos_txt
                         if sos_cid_to_mid_txt:
                             sos_cid_to_mid_txt["__tag__"] = alarm_num_tag
                             sos_cid_to_mid_txt["__text__"] = out_msg
@@ -5482,10 +5485,11 @@ def instant_alert():
 
     # هر کاربر جداگانه با دکمه هشدار دوره‌ای
     sent_count = 0
-    for cid in targets:
-        kb = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{cid}:{sym}"}]]
-        mid = send_tg_keyboard(token, str(cid), out_msg, kb)
-        if mid: sent_count += 1
+    if sym.upper() not in TEMP_MUTED_SYMBOLS:
+        for cid in targets:
+            kb = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{cid}:{sym}"}]]
+            mid = send_tg_keyboard(token, str(cid), out_msg, kb)
+            if mid: sent_count += 1
 
     # ذخیره در آرشیو
     try:
