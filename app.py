@@ -6049,6 +6049,66 @@ def _restore_notified():
         print(f"[STARTUP] notified restore error: {e}")
 _restore_notified()
 
+@app.route("/api/gold-alarms")
+def api_gold_alarms():
+    """
+    آلارم‌های XAUUSD (فعال یا فایرشده) رو برمی‌گردونه — بدون فیلتر شخصی/تیمی
+    (استثنا: همه چیز طلا برای همه قابل دیدنه).
+    Query params: status=active|fired, page (از ۱), per_page (پیش‌فرض ۱۰),
+                  from, to (YYYY-MM-DD), sender (substring match روی created_by)
+    """
+    status = request.args.get("status", "active")
+    page = max(1, int(request.args.get("page", 1)))
+    per_page = min(50, max(1, int(request.args.get("per_page", 10))))
+    date_from = request.args.get("from", "").strip()
+    date_to = request.args.get("to", "").strip()
+    sender_q = request.args.get("sender", "").strip().lower()
+
+    data = load_alerts()
+    pool = data.get("alerts", []) if status == "active" else data.get("archive", [])
+    items = [a for a in pool if str(a.get("symbol","")).upper() == "XAUUSD"]
+
+    # فیلتر بازه‌ی زمانی — روی created_at برای فعال‌ها، fired_at برای فایرشده‌ها
+    date_field = "created_at" if status == "active" else "fired_at"
+    if date_from:
+        items = [a for a in items if str(a.get(date_field) or "")[:10] >= date_from]
+    if date_to:
+        items = [a for a in items if str(a.get(date_field) or "")[:10] <= date_to]
+
+    # فیلتر فرستنده
+    if sender_q:
+        items = [a for a in items if sender_q in str(a.get("created_by","")).lower()]
+
+    # جدیدترین اول
+    items.sort(key=lambda a: str(a.get(date_field) or a.get("created_at") or ""), reverse=True)
+
+    total = len(items)
+    pages = max(1, (total + per_page - 1) // per_page)
+    page = min(page, pages)
+    start = (page - 1) * per_page
+    page_items = items[start:start + per_page]
+
+    out = []
+    for a in page_items:
+        out.append({
+            "id": a.get("id"),
+            "condition": a.get("condition"),
+            "target_price": a.get("target_price"),
+            "created_by": a.get("created_by") or "—",
+            "created_at": a.get("created_at"),
+            "comment": a.get("comment") or "",
+            "fired_at": a.get("fired_at"),
+            "fired_price": a.get("fired_price"),
+        })
+
+    return jsonify({"ok": True, "items": out, "total": total, "page": page, "pages": pages})
+
+
+@app.route("/gold-alarms")
+def gold_alarms_page():
+    return send_from_directory(app.static_folder, "gold-alarms.html")
+
+
 @app.route("/sva-report")
 def sva_report_page():
     """
