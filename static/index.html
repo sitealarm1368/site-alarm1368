@@ -43,19 +43,16 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .brand-name em{color:var(--green);font-style:normal}
 .brand-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:2px}
 .hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.more-wrap{position:relative}
+.more-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:var(--sans);transition:.2s}
+.more-btn:hover{border-color:var(--text3);color:var(--text)}
+.more-dropdown{display:none;position:absolute;top:calc(100% + 8px);left:0;min-width:180px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:6px;box-shadow:0 10px 30px rgba(0,0,0,.35);z-index:50;}
+.more-dropdown.open{display:flex;flex-direction:column;gap:2px;}
+.more-dropdown a{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;color:var(--text2);text-decoration:none;font-size:12.5px;font-weight:600;transition:.15s}
+.more-dropdown a:hover{background:var(--bg3);color:var(--text)}
 @media(max-width:480px){
-  .journal-btn,.sva-btn,.gold-btn{padding:6px 9px;font-size:0}
-  .journal-btn svg,.sva-btn svg,.gold-btn svg{width:16px;height:16px}
+  .more-btn span{display:none}
 }
-.journal-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(140,80,255,.5);background:linear-gradient(135deg,rgba(100,40,180,.55),rgba(60,20,120,.7));color:#e0c8ff;font-family:var(--sans);transition:.2s;text-decoration:none;letter-spacing:.3px;box-shadow:0 2px 10px rgba(100,40,200,.25)}
-.journal-btn:hover{background:linear-gradient(135deg,rgba(120,50,210,.7),rgba(80,30,160,.85));border-color:#a070ff;transform:translateY(-1px);box-shadow:0 5px 18px rgba(120,50,210,.45);color:#fff}
-.journal-btn svg{opacity:.85}
-.sva-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(232,179,64,.5);background:linear-gradient(135deg,rgba(180,130,30,.5),rgba(120,80,10,.65));color:#f5dfa0;font-family:var(--sans);transition:.2s;text-decoration:none;letter-spacing:.3px;box-shadow:0 2px 10px rgba(180,130,30,.25)}
-.sva-btn:hover{background:linear-gradient(135deg,rgba(210,155,40,.7),rgba(150,100,15,.85));border-color:#e8b340;transform:translateY(-1px);box-shadow:0 5px 18px rgba(210,155,40,.45);color:#fff}
-.sva-btn svg{opacity:.85}
-.gold-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid rgba(255,196,20,.55);background:linear-gradient(135deg,rgba(140,105,10,.55),rgba(90,65,5,.7));color:#ffe28a;font-family:var(--sans);transition:.2s;text-decoration:none;letter-spacing:.3px;box-shadow:0 2px 10px rgba(200,150,10,.25)}
-.gold-btn:hover{background:linear-gradient(135deg,rgba(255,196,20,.7),rgba(160,115,10,.85));border-color:#ffc414;transform:translateY(-1px);box-shadow:0 5px 18px rgba(255,196,20,.45);color:#fff}
-.gold-btn svg{opacity:.85}
 .live-pill{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:var(--mono);color:var(--text2)}
 .ldot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
@@ -520,18 +517,27 @@ select option{background:var(--bg3)}
     </div>
     <div class="hdr-right">
       <div class="live-pill"><span class="ldot"></span><span id="clk">--:--</span></div>
-      <a href="static/journal.html" class="journal-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        ژورنال
-      </a>
-      <a href="/sva-report" class="sva-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.5 8.5 13 14l-3-3-4.5 4.5"/></svg>
-        گزارش SVA
-      </a>
-      <a href="/gold-alarms" class="gold-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg>
-        آلارم طلا
-      </a>
+      <div class="more-wrap" id="moreWrap">
+        <button class="more-btn" onclick="toggleMoreMenu(event)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+          <span>گزارش‌ها</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="more-dropdown" id="moreDropdown">
+          <a href="/sva-report">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.5 8.5 13 14l-3-3-4.5 4.5"/></svg>
+            گزارش SVA
+          </a>
+          <a href="/gold-alarms">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M12 9v6"/></svg>
+            آلارم طلا
+          </a>
+          <a href="/report/weekly" target="_blank" rel="noopener">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 13v4M12 9v8M16 6v11"/></svg>
+            آنالیز هفتگی
+          </a>
+        </div>
+      </div>
       <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()">🌙</button>
     </div>
   </div>
@@ -550,7 +556,6 @@ select option{background:var(--bg3)}
   <div class="tabs">
     <button class="tab on t-my" onclick="switchTab('alerts',this,'all')">⭐ آلارم‌های من</button>
     <button class="tab t-sig" onclick="switchTab('signals',this,'')">📡 سیگنال</button>
-    <a class="tab" href="/report/weekly" target="_blank" rel="noopener" style="text-decoration:none;display:flex;align-items:center;justify-content:center">📊 آنالیز هفتگی</a>
   </div>
 
   <!-- ALERTS ALL PANEL -->
@@ -761,6 +766,18 @@ const API = '';
 function initTheme() { const t = localStorage.getItem('pa_theme') || 'dark'; applyTheme(t); }
 function applyTheme(t) { document.body.classList.toggle('light', t === 'light'); document.getElementById('theme-toggle').textContent = t === 'light' ? '☀️' : '🌙'; }
 function toggleTheme() { const isLight = document.body.classList.contains('light'); const next = isLight ? 'dark' : 'light'; localStorage.setItem('pa_theme', next); applyTheme(next); }
+
+function toggleMoreMenu(e) {
+  e.stopPropagation();
+  document.getElementById('moreDropdown').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('moreWrap');
+  const dd = document.getElementById('moreDropdown');
+  if (dd && dd.classList.contains('open') && wrap && !wrap.contains(e.target)) {
+    dd.classList.remove('open');
+  }
+});
 initTheme();
 
 setInterval(() => {

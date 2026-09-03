@@ -4624,6 +4624,16 @@ def _do_update(upd, token):
                                 kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
                                 send_tg_keyboard(token, str(tc2), out_s, kb2, track=False)
 
+                        # ذخیره توی آرشیو (این مسیر قبلاً اصلاً ذخیره نمی‌شد)
+                        sos_arch_entry_s = {"id": str(int(time.time()*1000)), "symbol": sym_s, "type": atype_s,
+                            "condition": condition_s, "comment": comment_s, "created_by": sender_s,
+                            "active": False, "fired_at": now_teh(), "fired_price": cur_s,
+                            "instant": True, "created_at": now_teh(), "tag": alarm_num_tag_s}
+                        d_arc_s = load_alerts()
+                        d_arc_s.setdefault("archive", []).append(sos_arch_entry_s)
+                        save_alerts(d_arc_s)
+                        threading.Thread(target=_sb_upsert_alert, args=(sos_arch_entry_s,), daemon=True).start()
+
                     elif step == "broadcast_text":
                         _, all_cids3, _ = _get_token_and_cids()
                         ok3 = sum(1 for tc3 in all_cids3 if send_tg(token, tc3, txt))
