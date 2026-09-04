@@ -6063,60 +6063,79 @@ def _restore_notified():
         print(f"[STARTUP] notified restore error: {e}")
 _restore_notified()
 
+
 @app.route("/api/gold-alarms")
 def api_gold_alarms():
     """
-    آلارم‌های XAUUSD (فعال یا فایرشده) رو برمی‌گردونه — بدون فیلتر شخصی/تیمی
-    (استثنا: همه چیز طلا برای همه قابل دیدنه).
+    آلارم‌های طلا (فعال یا فایرشده) — مستقیم و فیلترشده از Supabase می‌خونه
+    (نه از کش حافظه)، بدون فیلتر شخصی/تیمی (استثنا: طلا برای همه قابل دیدنه).
+    این روش هم دقیق‌تره (وابسته به تازگی کش نیست) هم کم‌مصرف‌تر روی Egress،
+    چون فقط ردیف‌های طلا و فقط همون صفحه‌ی درخواستی از Supabase کشیده می‌شه،
+    نه کل جدول.
     Query params: status=active|fired, page (از ۱), per_page (پیش‌فرض ۱۰),
                   from, to (YYYY-MM-DD), sender (substring match روی created_by)
     """
+    if not SUPABASE_KEY:
+        return jsonify({"ok": False, "error": "Supabase تنظیم نشده"}), 500
+
     status = request.args.get("status", "active")
     page = max(1, int(request.args.get("page", 1)))
     per_page = min(50, max(1, int(request.args.get("per_page", 10))))
     date_from = request.args.get("from", "").strip()
     date_to = request.args.get("to", "").strip()
-    sender_q = request.args.get("sender", "").strip().lower()
+    sender_q = request.args.get("sender", "").strip()
 
-    data = load_alerts()
-    pool = data.get("alerts", []) if status == "active" else data.get("archive", [])
-    items = [a for a in pool if "XAU" in str(a.get("symbol","")).upper()]
-
-    # فیلتر بازه‌ی زمانی — روی created_at برای فعال‌ها، fired_at برای فایرشده‌ها
     date_field = "created_at" if status == "active" else "fired_at"
-    if date_from:
-        items = [a for a in items if str(a.get(date_field) or "")[:10] >= date_from]
-    if date_to:
-        items = [a for a in items if str(a.get(date_field) or "")[:10] <= date_to]
-
-    # فیلتر فرستنده
+    params = {"symbol": "ilike.*XAU*", "order": f"{date_field}.desc"}
+    if status == "active":
+        params["active"] = "eq.true"
+    else:
+        params["fired_at"] = "not.is.null"
     if sender_q:
-        items = [a for a in items if sender_q in str(a.get("created_by","")).lower()]
+        params["created_by"] = f"ilike.*{sender_q}*"
 
-    # جدیدترین اول
-    items.sort(key=lambda a: str(a.get(date_field) or a.get("created_at") or ""), reverse=True)
+    # چون یه ستون ممکنه هم gte هم lte بخواد، از پارامتر ترکیبی and= استفاده می‌کنیم
+    and_conditions = []
+    if date_from:
+        and_conditions.append(f"{date_field}.gte.{date_from}")
+    if date_to:
+        and_conditions.append(f"{date_field}.lte.{date_to}T23:59:59")
+    if and_conditions:
+        params["and"] = f"({','.join(and_conditions)})"
 
-    total = len(items)
-    pages = max(1, (total + per_page - 1) // per_page)
+    offset = (page - 1) * per_page
+    headers = {**_sb_h(), "Prefer": "count=exact", "Range-Unit": "items",
+               "Range": f"{offset}-{offset + per_page - 1}"}
+    try:
+        r = requests.get(f"{SUPABASE_URL}/rest/v1/alerts", params=params, headers=headers, timeout=10)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"اتصال به Supabase ناموفق: {e}"}), 500
+
+    if r.status_code not in (200, 206):
+        return jsonify({"ok": False, "error": f"Supabase خطا داد ({r.status_code}): {r.text[:200]}"}), 500
+
+    total = 0
+    cr = r.headers.get("content-range", "")
+    if "/" in cr:
+        try: total = int(cr.split("/")[-1])
+        except Exception: pass
+
+    rows = r.json() if isinstance(r.json(), list) else []
+    pages = max(1, (total + per_page - 1) // per_page) if total else 1
     page = min(page, pages)
-    start = (page - 1) * per_page
-    page_items = items[start:start + per_page]
 
-    out = []
-    for a in page_items:
-        out.append({
-            "id": a.get("id"),
-            "condition": a.get("condition"),
-            "target_price": a.get("target_price"),
-            "created_by": a.get("created_by") or "—",
-            "created_at": a.get("created_at"),
-            "comment": a.get("comment") or "",
-            "fired_at": a.get("fired_at"),
-            "fired_price": a.get("fired_price"),
-        })
+    out = [{
+        "id": a.get("id"),
+        "condition": a.get("condition"),
+        "target_price": a.get("target_price"),
+        "created_by": a.get("created_by") or "—",
+        "created_at": a.get("created_at"),
+        "comment": a.get("comment") or "",
+        "fired_at": a.get("fired_at"),
+        "fired_price": a.get("fired_price"),
+    } for a in rows]
 
     return jsonify({"ok": True, "items": out, "total": total, "page": page, "pages": pages})
-
 
 @app.route("/gold-alarms")
 def gold_alarms_page():
