@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>آلارم‌های طلا (XAUUSD)</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#080C10;--panel:#0D1520;--panel2:#121D2A;--border:#1C2A38;--bordersoft:#162030;
@@ -16,11 +17,21 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
 .hero .eye{font-family:var(--fmono);font-size:11px;letter-spacing:.12em;color:var(--gold);margin-bottom:8px;}
 .hero h1{font-size:22px;font-weight:900;margin-bottom:6px;}
 .hero p{color:var(--muted);font-size:12.5px;}
-.chart-link{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:var(--panel);border:1px solid rgba(255,196,20,.4);color:var(--gold);text-decoration:none;padding:8px 14px;border-radius:10px;font-size:12.5px;font-weight:700;}
-.chart-link:hover{background:var(--panel2);border-color:var(--gold);}
-.tabs{display:flex;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0;}
+.tabs-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:16px;border-bottom:1px solid var(--border);}
+.tabs{display:flex;gap:8px;padding-bottom:0;}
 .tabs button{background:none;border:none;color:var(--muted);font-family:var(--fm);font-size:13.5px;font-weight:700;padding:10px 16px;cursor:pointer;border-bottom:2px solid transparent;}
 .tabs button.active{color:var(--gold);border-bottom-color:var(--gold);}
+.chart-toggle{background:var(--panel);border:1px solid rgba(255,196,20,.4);color:var(--gold);cursor:pointer;padding:7px 13px;border-radius:9px 9px 0 0;font-size:12px;font-weight:700;font-family:var(--fm);margin-bottom:-1px;}
+.chart-toggle:hover{background:var(--panel2);}
+.chart-toggle.on{background:var(--gold);color:#080C10;}
+#chartSection{display:none;margin-bottom:16px;}
+#chartSection.open{display:block;}
+#chart-box{width:100%;height:340px;background:#030508;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--border);}
+#chart-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);background:#030508;z-index:5;font-family:var(--fmono);}
+#lwc-el{width:100%;height:100%}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.chart-legend .li{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:11px;}
+.chart-legend .li i{width:14px;height:2.5px;border-radius:2px;display:inline-block;}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;}
 .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:4px;}
 .filters .fgroup{flex:1;min-width:120px;}
@@ -49,12 +60,22 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
     <div class="eye">XAUUSD · گلد دشبورد</div>
     <h1>🟡 آلارم‌های طلا</h1>
     <p>همه‌ی آلارم‌های فعال و فایرشده‌ی XAUUSD — برخلاف بقیه‌ی نمادها، اینجا همه چیز برای همه قابل دیدنه (بدون فیلتر شخصی/تیمی).</p>
-    <a href="/gold-chart" target="_blank" class="chart-link">📈 مشاهده روی چارت کندلی</a>
   </div>
 
-  <div class="tabs">
-    <button id="tabActive" class="active" onclick="switchTab('active')">🟢 فعال</button>
-    <button id="tabFired" onclick="switchTab('fired')">🔥 فایر شده</button>
+  <div class="tabs-row">
+    <div class="tabs">
+      <button id="tabActive" class="active" onclick="switchTab('active')">🟢 فعال</button>
+      <button id="tabFired" onclick="switchTab('fired')">🔥 فایر شده</button>
+    </div>
+    <button class="chart-toggle" id="chartToggleBtn" onclick="toggleChart()">📈 نمایش چارت فعال‌ها</button>
+  </div>
+
+  <div id="chartSection">
+    <div id="chart-box">
+      <div id="chart-loader">در حال بارگذاری چارت...</div>
+      <div id="lwc-el"></div>
+    </div>
+    <div class="chart-legend" id="chartLegend"></div>
   </div>
 
   <div class="filters">
@@ -77,12 +98,16 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
 <script>
 let currentStatus = 'active';
 let currentPage = 1;
+let chartOpen = false;
+let chartInited = false;
+let chart, series, priceLines = [], candleBars = [];
 
 function switchTab(status) {
   currentStatus = status;
   currentPage = 1;
   document.getElementById('tabActive').classList.toggle('active', status==='active');
   document.getElementById('tabFired').classList.toggle('active', status==='fired');
+  document.getElementById('chartToggleBtn').textContent = status === 'active' ? '📈 نمایش چارت فعال‌ها' : '📈 نمایش چارت فایرشده‌ها';
   load();
 }
 
@@ -100,6 +125,106 @@ function fmtCond(c) {
   return c === 'above' ? '📈 ناحیه سل (above)' : '📉 ناحیه بای (below)';
 }
 
+// ───────── چارت جاسازی‌شده ─────────
+function initChartOnce() {
+  if (chartInited) return;
+  chartInited = true;
+  const el = document.getElementById('lwc-el');
+  chart = LightweightCharts.createChart(el, {
+    layout: { background: { color: '#030508' }, textColor: '#7C8EA0' },
+    grid: { vertLines: { color: '#111a24' }, horzLines: { color: '#111a24' } },
+    rightPriceScale: { borderColor: '#1C2A38' },
+    timeScale: { borderColor: '#1C2A38', timeVisible: true, secondsVisible: false },
+  });
+  series = chart.addCandlestickSeries({
+    upColor: '#1FCE6B', downColor: '#F04060',
+    borderUpColor: '#1FCE6B', borderDownColor: '#F04060',
+    wickUpColor: '#1FCE6B', wickDownColor: '#F04060',
+  });
+  new ResizeObserver(entries => {
+    const { width, height } = entries[0].contentRect;
+    chart.resize(width, height);
+  }).observe(el);
+}
+
+async function loadCandlesIfNeeded() {
+  if (candleBars.length) return;
+  document.getElementById('chart-loader').style.display = 'flex';
+  try {
+    const res = await fetch('/api/gold-chart-data?interval=15m&limit=300&candles_only=true');
+    const data = await res.json();
+    if (data.candles && data.candles.length) {
+      candleBars = data.candles.map(c => ({
+        time: Math.floor(new Date(c.time).getTime() / 1000),
+        open: c.open, high: c.high, low: c.low, close: c.close,
+      })).sort((a, b) => a.time - b.time);
+      series.setData(candleBars);
+      chart.timeScale().fitContent();
+    }
+  } catch (e) { /* بی‌صدا، چارت خالی می‌مونه */ }
+  document.getElementById('chart-loader').style.display = 'none';
+}
+
+function toggleChart() {
+  chartOpen = !chartOpen;
+  const sec = document.getElementById('chartSection');
+  const btn = document.getElementById('chartToggleBtn');
+  sec.classList.toggle('open', chartOpen);
+  btn.classList.toggle('on', chartOpen);
+  if (chartOpen) {
+    initChartOnce();
+    loadCandlesIfNeeded().then(() => updateChartOverlay(lastItems));
+  }
+}
+
+let lastItems = [];
+
+function updateChartOverlay(items) {
+  if (!chartInited || !chartOpen) return;
+  priceLines.forEach(pl => series.removePriceLine(pl));
+  priceLines = [];
+  const legend = document.getElementById('chartLegend');
+  legend.innerHTML = '';
+
+  if (currentStatus === 'active') {
+    if (!items.length) { legend.innerHTML = '<div class="li">آلارم فعالی نیست</div>'; return; }
+    items.forEach(a => {
+      if (!a.target_price) return;
+      const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
+      const pl = series.createPriceLine({
+        price: a.target_price, color, lineWidth: 2,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: true, title: a.created_by,
+      });
+      priceLines.push(pl);
+      legend.innerHTML += `<div class="li"><i style="background:${color}"></i>${a.created_by} · ${a.target_price}</div>`;
+    });
+  } else {
+    if (!items.length || !candleBars.length) { legend.innerHTML = '<div class="li">آلارم فایرشده‌ای نیست</div>'; series.setMarkers([]); return; }
+    const markers = [];
+    items.forEach(a => {
+      if (!a.fired_price || !a.fired_at) return;
+      const targetTime = Math.floor(new Date(a.fired_at).getTime() / 1000);
+      let nearest = candleBars[0];
+      for (const b of candleBars) {
+        if (Math.abs(b.time - targetTime) < Math.abs(nearest.time - targetTime)) nearest = b;
+      }
+      const isAbove = a.condition === 'above';
+      const color = isAbove ? '#F04060' : '#1FCE6B';
+      markers.push({
+        time: nearest.time,
+        position: isAbove ? 'aboveBar' : 'belowBar',
+        color, shape: isAbove ? 'arrowDown' : 'arrowUp',
+        text: `🔥 ${a.created_by} (${a.fired_price})`,
+      });
+      legend.innerHTML += `<div class="li"><i style="background:${color}"></i>🔥 ${a.created_by} · ${a.fired_price}</div>`;
+    });
+    markers.sort((a, b) => a.time - b.time);
+    series.setMarkers(markers);
+  }
+}
+
+// ───────── لیست + فیلتر + صفحه‌بندی ─────────
 async function load() {
   const list = document.getElementById('list');
   list.innerHTML = '<div class="empty">در حال بارگذاری...</div>';
@@ -113,16 +238,22 @@ async function load() {
     const res = await fetch('/api/gold-alarms?' + params.toString());
     const data = await res.json();
     if (!data.ok) { list.innerHTML = '<div class="empty">خطا در دریافت داده</div>'; return; }
-    if (data.items.length === 0) {
+    lastItems = data.items || [];
+    if (lastItems.length === 0) {
       list.innerHTML = '<div class="empty">چیزی پیدا نشد</div>';
     } else {
-      list.innerHTML = data.items.map(renderCard).join('');
+      list.innerHTML = lastItems.map(renderCard).join('');
     }
     document.getElementById('pager').style.display = data.pages > 1 ? 'flex' : 'none';
     document.getElementById('pageLabel').textContent = `صفحه ${data.page} از ${data.pages}`;
     document.getElementById('prevBtn').disabled = data.page <= 1;
     document.getElementById('nextBtn').disabled = data.page >= data.pages;
     document.getElementById('countLabel').textContent = `${data.total} مورد`;
+
+    if (chartOpen) {
+      await loadCandlesIfNeeded();
+      updateChartOverlay(lastItems);
+    }
   } catch (e) {
     list.innerHTML = '<div class="empty">خطا در اتصال</div>';
   }

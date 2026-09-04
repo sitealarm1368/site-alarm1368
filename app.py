@@ -6151,6 +6151,7 @@ def api_gold_chart_data():
     """
     interval = request.args.get("interval", "1h")
     limit = min(1000, max(10, int(request.args.get("limit", 300))))
+    candles_only = request.args.get("candles_only", "").lower() == "true"
 
     candles, alarms, fired, errors = [], [], [], []
 
@@ -6163,6 +6164,9 @@ def api_gold_chart_data():
                     "low": b["low"], "close": b["close"]} for b in bars]
     except Exception as e:
         errors.append(f"کندل‌ها لود نشد: {e}")
+
+    if candles_only:
+        return jsonify({"ok": True, "candles": candles, "alarms": [], "fired": [], "errors": errors})
 
     if SUPABASE_KEY:
         try:
