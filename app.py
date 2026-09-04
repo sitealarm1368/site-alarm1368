@@ -3772,7 +3772,7 @@ def _do_update(upd, token):
                             f"✅ <b>آلارم فوری ارسال شد!</b>\n\n"
                             f"💰 <b>{sym_sc}</b>  {dir_lbl_sc}\n"
                             f"⏰ {now_pretty()} (تهران)", [])
-                        sos_aid = f"sos_{sym_sc}_{int(time.time())}"
+                        sos_aid = str(int(time.time() * 1000))
                         def _bg_sos(tok=token_cbq, tgts=targets_sc, msg=out_sc, s=sym_sc, aid=sos_aid,
                                     atag=alarm_num_tag_sc, sndr=sender_sc, cond=condition_sc, atp=atype_sc, cur=cur_sc):
                             sos_cid_to_mid = {}
