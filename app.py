@@ -5044,6 +5044,10 @@ def check_alerts():
                 if _loop_count % ACTIVE_REFRESH_EVERY_LOOPS == 1:
                     fresh = _sb_load_active_only()
                     if fresh is not None:
+                        # 🐛 رفع باگ: _sb_load_active_only آرشیو رو خالی برمی‌گردونه —
+                        # اگه مستقیم جایگزین کنیم، هر آلارم فایرشده‌ی اخیر از کش پاک می‌شه.
+                        # آرشیوِ قبلی رو نگه می‌داریم و فقط لیست فعال‌ها آپدیت می‌شه.
+                        fresh["archive"] = _cache_alerts.get("archive", []) if _cache_alerts else []
                         _cache_alerts = fresh
                     # اگه fresh None بود (خطای موقت شبکه/Supabase)، کش قبلی رو دست
                     # نخورده نگه می‌داریم — نال کردنش باعث می‌شد هر load_alerts()
