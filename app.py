@@ -6142,6 +6142,53 @@ def gold_alarms_page():
     return send_from_directory(app.static_folder, "gold-alarms.html")
 
 
+@app.route("/api/gold-chart-data")
+def api_gold_chart_data():
+    """
+    کندل‌های XAUUSD (از biquote.io — همون سرویسی که برای قیمت لحظه‌ای استفاده می‌کنیم)
+    + همه‌ی آلارم‌های فعال طلا (برای رسم خط روی چارت).
+    Query params: interval (پیش‌فرض 1h), limit (پیش‌فرض 300)
+    """
+    interval = request.args.get("interval", "1h")
+    limit = min(1000, max(10, int(request.args.get("limit", 300))))
+
+    candles, alarms, errors = [], [], []
+
+    try:
+        r = requests.get(f"https://biquote.io/api/XAUUSD/ohlc",
+                          params={"interval": interval, "limit": limit}, timeout=12)
+        r.raise_for_status()
+        bars = r.json().get("bars", [])
+        candles = [{"time": b["openTime"], "open": b["open"], "high": b["high"],
+                    "low": b["low"], "close": b["close"]} for b in bars]
+    except Exception as e:
+        errors.append(f"کندل‌ها لود نشد: {e}")
+
+    if SUPABASE_KEY:
+        try:
+            rr = requests.get(
+                f"{SUPABASE_URL}/rest/v1/alerts",
+                params={"symbol": "ilike.*XAU*", "active": "eq.true",
+                        "select": "id,condition,target_price,created_by"},
+                headers=_sb_h(), timeout=10)
+            if rr.status_code == 200:
+                for a in rr.json():
+                    alarms.append({
+                        "price": a.get("target_price"),
+                        "condition": a.get("condition"),
+                        "label": a.get("created_by") or "—",
+                    })
+        except Exception as e:
+            errors.append(f"آلارم‌ها لود نشد: {e}")
+
+    return jsonify({"ok": True, "candles": candles, "alarms": alarms, "errors": errors})
+
+
+@app.route("/gold-chart")
+def gold_chart_page():
+    return send_from_directory(app.static_folder, "gold-chart.html")
+
+
 @app.route("/sva-report")
 def sva_report_page():
     """

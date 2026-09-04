@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>چارت طلا با آلارم‌ها</title>
+<script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080C10;--panel:#0D1520;--panel2:#121D2A;--border:#1C2A38;
+--text:#DDE5EE;--muted:#7C8EA0;--muted2:#4E6070;--win:#1FCE6B;--loss:#F04060;--gold:#E8B340;
+--fm:'Vazirmatn',sans-serif;--fmono:'JetBrains Mono',monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--fm);direction:rtl;}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 14px 50px;}
+.hero{margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+.hero .eye{font-family:var(--fmono);font-size:11px;letter-spacing:.12em;color:var(--gold);margin-bottom:6px;}
+.hero h1{font-size:20px;font-weight:900;}
+.hero p{color:var(--muted);font-size:12px;margin-top:4px;}
+.intervals{display:flex;gap:6px;}
+.intervals button{background:var(--panel);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 12px;font-family:var(--fmono);font-size:12px;cursor:pointer;}
+.intervals button.active{background:var(--gold);color:#080C10;border-color:var(--gold);font-weight:700;}
+#chart-container{width:100%;height:560px;background:#030508;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--border);}
+#loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--muted);background:#030508;z-index:5;font-family:var(--fmono);}
+#lwc-chart{width:100%;height:100%}
+.legend{margin-top:14px;display:flex;flex-direction:column;gap:6px;}
+.legend-item{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12.5px;}
+.legend-item .dot{width:20px;height:3px;border-radius:2px;flex-shrink:0;}
+.legend-item .name{font-weight:700;flex:1;}
+.legend-item .price{font-family:var(--fmono);color:var(--gold);}
+.legend-item .cond{font-size:11px;color:var(--muted);}
+.empty{text-align:center;color:var(--muted2);padding:16px;font-size:12.5px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eye">XAUUSD · چارت زنده</div>
+      <h1>📈 چارت طلا با آلارم‌های فعال</h1>
+      <p>هر خط افقی روی چارت = یه آلارم فعال طلا، با اسم فرستنده‌ش</p>
+    </div>
+    <div class="intervals" id="intervals">
+      <button data-i="15m" onclick="setInterval_(this,'15m')">M15</button>
+      <button data-i="1h" class="active" onclick="setInterval_(this,'1h')">H1</button>
+      <button data-i="4h" onclick="setInterval_(this,'4h')">H4</button>
+      <button data-i="1d" onclick="setInterval_(this,'1d')">D1</button>
+    </div>
+  </div>
+
+  <div id="chart-container">
+    <div id="loader">در حال بارگذاری چارت...</div>
+    <div id="lwc-chart"></div>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+let chart, series, priceLines = [];
+let currentInterval = '1h';
+
+function initChart() {
+  const el = document.getElementById('lwc-chart');
+  chart = LightweightCharts.createChart(el, {
+    layout: { background: { color: '#030508' }, textColor: '#7C8EA0' },
+    grid: { vertLines: { color: '#111a24' }, horzLines: { color: '#111a24' } },
+    rightPriceScale: { borderColor: '#1C2A38' },
+    timeScale: { borderColor: '#1C2A38', timeVisible: true, secondsVisible: false },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+  });
+  series = chart.addCandlestickSeries({
+    upColor: '#1FCE6B', downColor: '#F04060',
+    borderUpColor: '#1FCE6B', borderDownColor: '#F04060',
+    wickUpColor: '#1FCE6B', wickDownColor: '#F04060',
+  });
+  new ResizeObserver(entries => {
+    const { width, height } = entries[0].contentRect;
+    chart.resize(width, height);
+  }).observe(el);
+}
+
+function setInterval_(btn, iv) {
+  currentInterval = iv;
+  document.querySelectorAll('#intervals button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadData();
+}
+
+async function loadData() {
+  document.getElementById('loader').style.display = 'flex';
+  try {
+    const res = await fetch(`/api/gold-chart-data?interval=${currentInterval}&limit=300`);
+    const data = await res.json();
+
+    if (data.candles && data.candles.length) {
+      const bars = data.candles.map(c => ({
+        time: Math.floor(new Date(c.time).getTime() / 1000),
+        open: c.open, high: c.high, low: c.low, close: c.close,
+      })).sort((a, b) => a.time - b.time);
+      series.setData(bars);
+      chart.timeScale().fitContent();
+    }
+
+    priceLines.forEach(pl => series.removePriceLine(pl));
+    priceLines = [];
+    const legend = document.getElementById('legend');
+    if (!data.alarms || data.alarms.length === 0) {
+      legend.innerHTML = '<div class="empty">فعلاً هیچ آلارم فعالی روی طلا نیست</div>';
+    } else {
+      legend.innerHTML = '';
+      data.alarms.forEach(a => {
+        if (!a.price) return;
+        const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
+        const pl = series.createPriceLine({
+          price: a.price,
+          color: color,
+          lineWidth: 2,
+          lineStyle: LightweightCharts.LineStyle.Dashed,
+          axisLabelVisible: true,
+          title: a.label,
+        });
+        priceLines.push(pl);
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<span class="dot" style="background:${color}"></span>
+          <span class="name">${a.label}</span>
+          <span class="cond">${a.condition === 'above' ? '📈 سل' : '📉 بای'}</span>
+          <span class="price">${a.price}</span>`;
+        legend.appendChild(item);
+      });
+    }
+
+    if (data.errors && data.errors.length) {
+      console.warn('gold-chart errors:', data.errors);
+    }
+  } catch (e) {
+    document.getElementById('legend').innerHTML = '<div class="empty">خطا در بارگذاری داده</div>';
+  }
+  document.getElementById('loader').style.display = 'none';
+}
+
+initChart();
+loadData();
+</script>
+</body>
+</html>
