@@ -41,10 +41,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);direction:rtl;
       <p>هر خط افقی روی چارت = یه آلارم فعال طلا، با اسم فرستنده‌ش</p>
     </div>
     <div class="intervals" id="intervals">
-      <button data-i="15m" onclick="setInterval_(this,'15m')">M15</button>
-      <button data-i="1h" class="active" onclick="setInterval_(this,'1h')">H1</button>
-      <button data-i="4h" onclick="setInterval_(this,'4h')">H4</button>
-      <button data-i="1d" onclick="setInterval_(this,'1d')">D1</button>
+      <button data-i="5m" onclick="setInterval_(this,'5m')">M5</button>
+      <button data-i="15m" class="active" onclick="setInterval_(this,'15m')">M15</button>
+      <button data-i="1h" onclick="setInterval_(this,'1h')">H1</button>
     </div>
   </div>
 
@@ -58,7 +57,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--fm);direction:rtl;
 
 <script>
 let chart, series, priceLines = [];
-let currentInterval = '1h';
+let currentInterval = '15m';
 
 function initChart() {
   const el = document.getElementById('lwc-chart');
@@ -92,9 +91,10 @@ async function loadData() {
   try {
     const res = await fetch(`/api/gold-chart-data?interval=${currentInterval}&limit=300`);
     const data = await res.json();
+    let bars = [];
 
     if (data.candles && data.candles.length) {
-      const bars = data.candles.map(c => ({
+      bars = data.candles.map(c => ({
         time: Math.floor(new Date(c.time).getTime() / 1000),
         open: c.open, high: c.high, low: c.low, close: c.close,
       })).sort((a, b) => a.time - b.time);
@@ -105,10 +105,11 @@ async function loadData() {
     priceLines.forEach(pl => series.removePriceLine(pl));
     priceLines = [];
     const legend = document.getElementById('legend');
+    legend.innerHTML = '';
+
     if (!data.alarms || data.alarms.length === 0) {
-      legend.innerHTML = '<div class="empty">فعلاً هیچ آلارم فعالی روی طلا نیست</div>';
+      legend.innerHTML += '<div class="empty">فعلاً هیچ آلارم فعالی روی طلا نیست</div>';
     } else {
-      legend.innerHTML = '';
       data.alarms.forEach(a => {
         if (!a.price) return;
         const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
@@ -125,10 +126,40 @@ async function loadData() {
         item.className = 'legend-item';
         item.innerHTML = `<span class="dot" style="background:${color}"></span>
           <span class="name">${a.label}</span>
-          <span class="cond">${a.condition === 'above' ? '📈 سل' : '📉 بای'}</span>
+          <span class="cond">${a.condition === 'above' ? '📈 سل' : '📉 بای'} · فعال</span>
           <span class="price">${a.price}</span>`;
         legend.appendChild(item);
       });
+    }
+
+    // آلارم‌های فایرشده (شامل آلارم فوری) — به‌صورت مارکر روی نزدیک‌ترین کندل
+    if (data.fired && data.fired.length && bars && bars.length) {
+      const markers = [];
+      data.fired.forEach(f => {
+        if (!f.price || !f.fired_at) return;
+        const targetTime = Math.floor(new Date(f.fired_at).getTime() / 1000);
+        let nearest = bars[0];
+        for (const b of bars) {
+          if (Math.abs(b.time - targetTime) < Math.abs(nearest.time - targetTime)) nearest = b;
+        }
+        const isAbove = f.condition === 'above';
+        markers.push({
+          time: nearest.time,
+          position: isAbove ? 'aboveBar' : 'belowBar',
+          color: isAbove ? '#F04060' : '#1FCE6B',
+          shape: isAbove ? 'arrowDown' : 'arrowUp',
+          text: `🔥 ${f.label} (${f.price})`,
+        });
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `<span class="dot" style="background:${isAbove ? '#F04060' : '#1FCE6B'}"></span>
+          <span class="name">${f.label}</span>
+          <span class="cond">🔥 فایر شده</span>
+          <span class="price">${f.price}</span>`;
+        legend.appendChild(item);
+      });
+      markers.sort((a, b) => a.time - b.time);
+      series.setMarkers(markers);
     }
 
     if (data.errors && data.errors.length) {

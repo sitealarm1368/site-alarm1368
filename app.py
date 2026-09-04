@@ -6152,7 +6152,7 @@ def api_gold_chart_data():
     interval = request.args.get("interval", "1h")
     limit = min(1000, max(10, int(request.args.get("limit", 300))))
 
-    candles, alarms, errors = [], [], []
+    candles, alarms, fired, errors = [], [], [], []
 
     try:
         r = requests.get(f"https://biquote.io/api/XAUUSD/ohlc",
@@ -6181,7 +6181,28 @@ def api_gold_chart_data():
         except Exception as e:
             errors.append(f"آلارم‌ها لود نشد: {e}")
 
-    return jsonify({"ok": True, "candles": candles, "alarms": alarms, "errors": errors})
+        # آلارم‌های فایرشده‌ی اخیر (شامل آلارم فوری) — برای مارکر روی چارت
+        try:
+            two_weeks_ago = (datetime.now(TEHRAN) - timedelta(days=14)).strftime("%Y-%m-%d")
+            rf = requests.get(
+                f"{SUPABASE_URL}/rest/v1/alerts",
+                params={"symbol": "ilike.*XAU*", "fired_at": f"gte.{two_weeks_ago}",
+                        "select": "id,condition,fired_price,fired_at,created_by",
+                        "order": "fired_at.desc", "limit": "100"},
+                headers=_sb_h(), timeout=10)
+            if rf.status_code == 200:
+                for a in rf.json():
+                    if a.get("fired_price") and a.get("fired_at"):
+                        fired.append({
+                            "price": a.get("fired_price"),
+                            "condition": a.get("condition"),
+                            "label": a.get("created_by") or "—",
+                            "fired_at": a.get("fired_at"),
+                        })
+        except Exception as e:
+            errors.append(f"فایرشده‌ها لود نشد: {e}")
+
+    return jsonify({"ok": True, "candles": candles, "alarms": alarms, "fired": fired, "errors": errors})
 
 
 @app.route("/gold-chart")
