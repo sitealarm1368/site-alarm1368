@@ -6076,7 +6076,7 @@ def api_gold_alarms():
 
     data = load_alerts()
     pool = data.get("alerts", []) if status == "active" else data.get("archive", [])
-    items = [a for a in pool if str(a.get("symbol","")).upper() == "XAUUSD"]
+    items = [a for a in pool if "XAU" in str(a.get("symbol","")).upper()]
 
     # فیلتر بازه‌ی زمانی — روی created_at برای فعال‌ها، fired_at برای فایرشده‌ها
     date_field = "created_at" if status == "active" else "fired_at"
