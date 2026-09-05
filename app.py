@@ -142,6 +142,35 @@ def _sb_upsert_config(tg, users, errors):
     except Exception as e:
         print(f"[alerts] config save error: {e}")
 
+def _sb_load_muted_instant_senders() -> list:
+    """اسم‌هایی که آلارم فوریشون ذخیره میشه ولی به تلگرام ارسال نمیشه — پیش‌فرض لیست خالی"""
+    if not SUPABASE_KEY:
+        return []
+    try:
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__&select=muted_instant_senders",
+            headers=_sb_h(), timeout=8)
+        if r.status_code == 200:
+            rows = r.json()
+            if rows and rows[0].get("muted_instant_senders") is not None:
+                val = rows[0]["muted_instant_senders"]
+                return val if isinstance(val, list) else json.loads(val)
+    except Exception as e:
+        print(f"[assign] load muted_instant_senders exc: {e}")
+    return []
+
+def _sb_save_muted_instant_senders(names: list):
+    """فقط همین یک فیلد رو patch می‌کنه"""
+    if not SUPABASE_KEY:
+        return
+    try:
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__",
+            headers={**_sb_h(), "Prefer": "return=minimal"},
+            json={"muted_instant_senders": names}, timeout=8)
+    except Exception as e:
+        print(f"[assign] save muted_instant_senders exc: {e}")
+
 def _sb_load_deprioritize_masoud() -> bool:
     """می‌خونه آیا اولویت پایین مسعود فعاله یا نه — پیش‌فرض True اگه چیزی پیدا نشد"""
     if not SUPABASE_KEY:
@@ -752,6 +781,28 @@ def _set_member_availability(name: str, available: bool):
         snapshot = sorted(_unavailable_members)
     _sb_save_unavailable_members(snapshot)
 
+# اسم اعضایی که آلارم فوریشون ذخیره و آرشیو میشه ولی به تلگرام ارسال نمیشه.
+# پیش‌فرض خالی (همه ارسال میشن) تا رفتار فعلی حفظ بشه.
+_muted_instant_senders: set = set()
+_muted_instant_lock = threading.Lock()
+
+def _is_instant_sender_muted(name: str) -> bool:
+    if not name:
+        return False
+    with _muted_instant_lock:
+        return name.strip().lower() in _muted_instant_senders
+
+def _set_instant_sender_muted(name: str, muted: bool):
+    global _muted_instant_senders
+    key = name.strip().lower()
+    with _muted_instant_lock:
+        if muted:
+            _muted_instant_senders.add(key)
+        else:
+            _muted_instant_senders.discard(key)
+        snapshot = sorted(_muted_instant_senders)
+    _sb_save_muted_instant_senders(snapshot)
+
 # =====================================================================
 # 🌐 پنل ادمین وب — /admin-panel
 # =====================================================================
@@ -1089,7 +1140,7 @@ def _sb_restore_on_startup():
     تا تقسیم رندومِ عادلانه بدون از دست دادن state ادامه پیدا کنه.
     دیگه هیچ شیفت/handover/scheduler‌ای وجود نداره.
     """
-    global _deprioritize_masoud_active, _unavailable_members
+    global _deprioritize_masoud_active, _unavailable_members, _muted_instant_senders
     rows = _sb_load_active_assignments()
     _rebuild_active_assign_count(rows)
     _rebuild_daily_assign_count()
@@ -1097,9 +1148,12 @@ def _sb_restore_on_startup():
         _deprioritize_masoud_active = _sb_load_deprioritize_masoud()
     with _unavailable_members_lock:
         _unavailable_members = set(_sb_load_unavailable_members())
+    with _muted_instant_lock:
+        _muted_instant_senders = set(n.lower() for n in _sb_load_muted_instant_senders())
     print(f"[assign] startup: {len(rows)} آلارم active از Supabase بازسازی شد — "
           f"اولویت پایین مسعود: {'فعال' if _deprioritize_masoud_active else 'غیرفعال'} — "
-          f"غیرفعال‌ها: {sorted(_unavailable_members) or 'هیچ‌کس'}")
+          f"غیرفعال‌ها: {sorted(_unavailable_members) or 'هیچ‌کس'} — "
+          f"آلارم فوری بی‌صدا: {sorted(_muted_instant_senders) or 'هیچ‌کس'}")
 
 
 
@@ -3776,7 +3830,7 @@ def _do_update(upd, token):
                         def _bg_sos(tok=token_cbq, tgts=targets_sc, msg=out_sc, s=sym_sc, aid=sos_aid,
                                     atag=alarm_num_tag_sc, sndr=sender_sc, cond=condition_sc, atp=atype_sc, cur=cur_sc):
                             sos_cid_to_mid = {}
-                            if s.upper() not in TEMP_MUTED_SYMBOLS:
+                            if s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sndr):
                                 for tc_sc in tgts:
                                     kb_sc = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc_sc}:{s}"}]]
                                     mid_sc = send_tg_keyboard(tok, str(tc_sc), msg, kb_sc, track=False)
@@ -4619,7 +4673,7 @@ def _do_update(upd, token):
                                 + (f"💬 {comment_s}\n" if comment_s else "")
                                 + f"⏰ {now_pretty()} (تهران)", [])
                         # broadcast به بقیه
-                        if sym_s.upper() not in TEMP_MUTED_SYMBOLS:
+                        if sym_s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_s):
                             for tc2 in targets2:
                                 kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
                                 send_tg_keyboard(token, str(tc2), out_s, kb2, track=False)
@@ -4752,7 +4806,7 @@ def _do_update(upd, token):
                         targets = all_cids if BROADCAST_MODE else [YOUR_CHAT_ID]
                         sos_aid_txt = f"sos_{sym}_{int(time.time())}"
                         sos_cid_to_mid_txt = {}
-                        if sym.upper() not in TEMP_MUTED_SYMBOLS:
+                        if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_name):
                             for tc in targets:
                                 mid_sos_txt = send_tg_keyboard(token, tc, out_msg,
                                     [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc}:{sym}"}]],
@@ -5499,7 +5553,7 @@ def instant_alert():
 
     # هر کاربر جداگانه با دکمه هشدار دوره‌ای
     sent_count = 0
-    if sym.upper() not in TEMP_MUTED_SYMBOLS:
+    if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(_creator):
         for cid in targets:
             kb = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{cid}:{sym}"}]]
             mid = send_tg_keyboard(token, str(cid), out_msg, kb)
@@ -5976,6 +6030,34 @@ def admin_panel_set_deprioritize():
     value = bool(body.get("active", True))
     _set_deprioritize_masoud(value)
     return jsonify({"ok": True, "active": value})
+
+
+@app.route("/api/admin-panel/muted-instant-senders", methods=["GET"])
+def admin_panel_get_muted_instant():
+    """لیست فعلی افرادی که آلارم فوریشون ذخیره میشه ولی به تلگرام ارسال نمیشه"""
+    auth_err = _require_admin_session()
+    if auth_err:
+        return auth_err
+    with _muted_instant_lock:
+        muted = sorted(_muted_instant_senders)
+    return jsonify({"ok": True, "muted": muted, "team_members": TEAM_MEMBERS})
+
+
+@app.route("/api/admin-panel/muted-instant-senders", methods=["POST"])
+def admin_panel_set_muted_instant():
+    """روشن/خاموش کردن ارسال تلگرامِ آلارم فوری یک نفر خاص (خودِ ذخیره‌سازی همیشه انجام میشه)"""
+    auth_err = _require_admin_session()
+    if auth_err:
+        return auth_err
+    body = request.json or {}
+    name = (body.get("name") or "").strip()
+    muted = bool(body.get("muted", False))
+    if not name:
+        return jsonify({"ok": False, "error": "اسم مشخص نشده"}), 400
+    _set_instant_sender_muted(name, muted)
+    with _muted_instant_lock:
+        current = sorted(_muted_instant_senders)
+    return jsonify({"ok": True, "muted": current})
 
 
 @app.route("/api/admin-panel/team-availability", methods=["GET"])

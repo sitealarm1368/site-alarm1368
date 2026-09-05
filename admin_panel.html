@@ -278,6 +278,22 @@
       </div>
     </div>
 
+    <div class="section-label">آلارم فوری بی‌صدا</div>
+    <div class="card">
+      <div class="card-icon-row">
+        <div>
+          <div class="card-title">بی‌صدا کردن آلارم فوری یک نفر</div>
+          <div class="card-desc" style="margin-bottom:0">آلارم فوری این افراد مثل همیشه ذخیره و آرشیو می‌شه، ولی به تلگرام ارسال نمی‌شه. برای اضافه کردن، اسمی که موقع ثبت آلارم فوری استفاده می‌کنن رو دقیقاً وارد کن (مثلاً zardari).</div>
+        </div>
+        <div class="card-icon red">🔕</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" class="text-input" placeholder="اسم فرستنده (مثلاً zardari)" id="muteSenderInput" style="flex:1">
+        <button class="btn-mini" onclick="addMutedSender()">اضافه کن</button>
+      </div>
+      <div class="user-list" id="mutedSendersList"></div>
+    </div>
+
     <div class="section-label">منطقه‌ی خطر</div>
     <div class="card" style="border-color: rgba(204,97,83,.25);">
       <div class="card-icon-row">
@@ -350,6 +366,7 @@
     loadAssignments();
     loadUsers();
     loadDeprioritize();
+    loadMutedSenders();
   }
 
   function logout(){
@@ -507,6 +524,65 @@
     } catch(e){
       document.getElementById('deprioritizeDesc').textContent = 'خطا در بارگذاری: ' + e.message;
     }
+  }
+
+  async function loadMutedSenders(){
+    try{
+      const data = await apiCall('/api/admin-panel/muted-instant-senders');
+      if (!data.ok) throw new Error(data.error);
+      renderMutedSenders(data.muted || []);
+    } catch(e){
+      document.getElementById('mutedSendersList').innerHTML = '<div class="user-row">خطا در بارگذاری: '+e.message+'</div>';
+    }
+  }
+
+  function renderMutedSenders(names){
+    const box = document.getElementById('mutedSendersList');
+    if (!names.length){
+      box.innerHTML = '<div class="user-row" style="color:var(--text-faint);justify-content:center">فعلاً کسی بی‌صدا نیست</div>';
+      return;
+    }
+    box.innerHTML = names.map(n => `
+      <div class="user-row">
+        <div class="user-left">
+          <div class="avatar">🔕</div>
+          <div class="user-name">${n}</div>
+        </div>
+        <button class="remove-x" onclick="removeMutedSender('${n}')">✕</button>
+      </div>
+    `).join('');
+  }
+
+  async function addMutedSender(){
+    const input = document.getElementById('muteSenderInput');
+    const name = input.value.trim();
+    if (!name) return;
+    try{
+      const data = await apiCall('/api/admin-panel/muted-instant-senders', {
+        method: 'POST', body: JSON.stringify({name, muted: true})
+      });
+      if (data.ok){
+        input.value = '';
+        renderMutedSenders(data.muted);
+        pulseToast('آلارم فوری «'+name+'» بی‌صدا شد');
+      } else {
+        pulseToast(data.error || 'خطا', true);
+      }
+    } catch(e){ pulseToast(e.message, true); }
+  }
+
+  async function removeMutedSender(name){
+    try{
+      const data = await apiCall('/api/admin-panel/muted-instant-senders', {
+        method: 'POST', body: JSON.stringify({name, muted: false})
+      });
+      if (data.ok){
+        renderMutedSenders(data.muted);
+        pulseToast('آلارم فوری «'+name+'» دوباره ارسال می‌شه');
+      } else {
+        pulseToast(data.error || 'خطا', true);
+      }
+    } catch(e){ pulseToast(e.message, true); }
   }
 
   function renderDeprioritize(active){
