@@ -6133,6 +6133,8 @@ def api_gold_alarms():
         "comment": a.get("comment") or "",
         "fired_at": a.get("fired_at"),
         "fired_price": a.get("fired_price"),
+        "instant": bool(a.get("instant")),
+        "instant": not bool(a.get("target_price")),
     } for a in rows]
 
     return jsonify({"ok": True, "items": out, "total": total, "page": page, "pages": pages})

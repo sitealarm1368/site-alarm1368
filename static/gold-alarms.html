@@ -26,12 +26,12 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
 .chart-toggle.on{background:var(--gold);color:#080C10;}
 #chartSection{display:none;margin-bottom:16px;}
 #chartSection.open{display:block;}
-#chart-box{width:100%;height:340px;background:#030508;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--border);}
+#chart-box{width:100%;height:520px;background:#030508;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--border);}
 #chart-loader{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--muted);background:#030508;z-index:5;font-family:var(--fmono);}
 #lwc-el{width:100%;height:100%}
-.chart-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.chart-legend .li{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:11px;}
-.chart-legend .li i{width:14px;height:2.5px;border-radius:2px;display:inline-block;}
+.tf-btns{display:flex;gap:6px;margin-bottom:8px;}
+.tf-btns button{background:var(--panel);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 14px;font-family:var(--fmono);font-size:12px;cursor:pointer;}
+.tf-btns button.active{background:var(--gold);color:#080C10;border-color:var(--gold);font-weight:700;}
 .filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;}
 .filters label{font-size:10.5px;color:var(--muted);display:block;margin-bottom:4px;}
 .filters .fgroup{flex:1;min-width:120px;}
@@ -71,11 +71,15 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
   </div>
 
   <div id="chartSection">
+    <div class="tf-btns" id="tfBtns">
+      <button data-i="5m" onclick="setChartInterval(this,'5m')">M5</button>
+      <button data-i="15m" class="active" onclick="setChartInterval(this,'15m')">M15</button>
+      <button data-i="1h" onclick="setChartInterval(this,'1h')">H1</button>
+    </div>
     <div id="chart-box">
       <div id="chart-loader">در حال بارگذاری چارت...</div>
       <div id="lwc-el"></div>
     </div>
-    <div class="chart-legend" id="chartLegend"></div>
   </div>
 
   <div class="filters">
@@ -101,6 +105,7 @@ let currentPage = 1;
 let chartOpen = false;
 let chartInited = false;
 let chart, series, priceLines = [], candleBars = [];
+let currentInterval = '15m';
 
 function switchTab(status) {
   currentStatus = status;
@@ -147,11 +152,11 @@ function initChartOnce() {
   }).observe(el);
 }
 
-async function loadCandlesIfNeeded() {
-  if (candleBars.length) return;
+async function loadCandlesIfNeeded(force) {
+  if (candleBars.length && !force) return;
   document.getElementById('chart-loader').style.display = 'flex';
   try {
-    const res = await fetch('/api/gold-chart-data?interval=15m&limit=300&candles_only=true');
+    const res = await fetch(`/api/gold-chart-data?interval=${currentInterval}&limit=300&candles_only=true`);
     const data = await res.json();
     if (data.candles && data.candles.length) {
       candleBars = data.candles.map(c => ({
@@ -163,6 +168,14 @@ async function loadCandlesIfNeeded() {
     }
   } catch (e) { /* بی‌صدا، چارت خالی می‌مونه */ }
   document.getElementById('chart-loader').style.display = 'none';
+}
+
+function setChartInterval(btn, iv) {
+  currentInterval = iv;
+  document.querySelectorAll('#tfBtns button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  candleBars = [];
+  loadCandlesIfNeeded(true).then(() => updateChartOverlay(lastItems));
 }
 
 function toggleChart() {
@@ -183,11 +196,9 @@ function updateChartOverlay(items) {
   if (!chartInited || !chartOpen) return;
   priceLines.forEach(pl => series.removePriceLine(pl));
   priceLines = [];
-  const legend = document.getElementById('chartLegend');
-  legend.innerHTML = '';
 
   if (currentStatus === 'active') {
-    if (!items.length) { legend.innerHTML = '<div class="li">آلارم فعالی نیست</div>'; return; }
+    series.setMarkers([]); // اگه قبلاً تو تب فایرشده مارکر گذاشته بودیم، پاک کن
     items.forEach(a => {
       if (!a.target_price) return;
       const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
@@ -197,10 +208,9 @@ function updateChartOverlay(items) {
         axisLabelVisible: true, title: a.created_by,
       });
       priceLines.push(pl);
-      legend.innerHTML += `<div class="li"><i style="background:${color}"></i>${a.created_by} · ${a.target_price}</div>`;
     });
   } else {
-    if (!items.length || !candleBars.length) { legend.innerHTML = '<div class="li">آلارم فایرشده‌ای نیست</div>'; series.setMarkers([]); return; }
+    if (!items.length || !candleBars.length) { series.setMarkers([]); return; }
     const markers = [];
     items.forEach(a => {
       if (!a.fired_price || !a.fired_at) return;
@@ -210,14 +220,16 @@ function updateChartOverlay(items) {
         if (Math.abs(b.time - targetTime) < Math.abs(nearest.time - targetTime)) nearest = b;
       }
       const isAbove = a.condition === 'above';
-      const color = isAbove ? '#F04060' : '#1FCE6B';
+      // آلارم فوری رنگ نارنجی-آتیشی جدا می‌گیره تا از آلارم عادی فایرشده مشخص باشه
+      const color = a.instant ? '#FF8C1A' : (isAbove ? '#F04060' : '#1FCE6B');
+      const shape = a.instant ? 'circle' : (isAbove ? 'arrowDown' : 'arrowUp');
+      const prefix = a.instant ? '⚡🔥' : '🔥';
       markers.push({
         time: nearest.time,
         position: isAbove ? 'aboveBar' : 'belowBar',
-        color, shape: isAbove ? 'arrowDown' : 'arrowUp',
-        text: `🔥 ${a.created_by} (${a.fired_price})`,
+        color, shape,
+        text: `${prefix} ${a.created_by} (${a.fired_price})`,
       });
-      legend.innerHTML += `<div class="li"><i style="background:${color}"></i>🔥 ${a.created_by} · ${a.fired_price}</div>`;
     });
     markers.sort((a, b) => a.time - b.time);
     series.setMarkers(markers);
