@@ -6380,6 +6380,21 @@ def report_weekly_html():
         except Exception as e:
             print(f"[report_weekly] targeted alerts fetch error: {e}")
     rows = [r for r in rows if not alerts_map.get(str(r.get("id","")), {}).get("is_private")]
+
+    # آلارم‌های فوری (instant) — این‌ها اصلاً وارد چرخه‌ی تخصیص نمی‌شن، پس جدا از جدول alerts می‌خونیم
+    instant_rows = []
+    if SUPABASE_KEY:
+        try:
+            iu = (f"{SUPABASE_URL}/rest/v1/alerts"
+                  f"?instant=eq.true&fired_at=gte.{range_start_str}&select=*&order=fired_at.desc")
+            if range_end:
+                iu += f"&fired_at=lt.{range_end.strftime('%Y-%m-%dT%H:%M:%S')}"
+            ri = requests.get(iu, headers=_sb_h(), timeout=10)
+            if ri.status_code == 200:
+                instant_rows = [a for a in ri.json() if not a.get("is_private")]
+        except Exception as e:
+            print(f"[report_weekly] instant fetch error: {e}")
+
     rows_html = ""
     false_by_set = set()
     for idx, row in enumerate(rows, 1):
@@ -6431,7 +6446,7 @@ def report_weekly_html():
               <button type="button" class="false-btn" onclick="markFalse('{aid}', this)">❌ فالس کردن</button>
             </div>'''
         rows_html += f"""
-        <div class="card card-{status_cls}" data-search="{(assignee + ' ' + sym + ' ' + tag + ' ' + creator + ' ' + false_by).lower()}" data-falseby="{false_by.lower()}" data-status="{status_cls}">
+        <div class="card card-{status_cls}" data-kind="regular" data-search="{(assignee + ' ' + sym + ' ' + tag + ' ' + creator + ' ' + false_by).lower()}" data-falseby="{false_by.lower()}" data-status="{status_cls}">
           <div class="card-num">{idx}</div>
           <div class="card-inner">
           <div class="card-glow"></div>
@@ -6467,6 +6482,59 @@ def report_weekly_html():
               <span class="mc {candle_cls}" style="height:50%"></span>
             </div>
             <span class="rail-label">{dir_zone_label if dir_zone_label else ''}</span>
+          </div>
+          </div>
+        </div>"""
+
+    # ── کارت‌های آلارم فوری (پیش‌فرض مخفی — فقط با فیلتر دیده می‌شن) ──
+    for idx_i, a in enumerate(instant_rows, 1):
+        i_sym = a.get("symbol","") or ""
+        i_cond = a.get("condition","") or ""
+        i_creator = a.get("created_by","") or "—"
+        i_fired = str(a.get("fired_at",""))[:16]
+        i_created = str(a.get("created_at",""))[:16]
+        i_tag = a.get("tag","—") or "—"
+        i_fired_price = a.get("fired_price")
+        i_target = fmt_price(float(i_fired_price), i_sym) if i_fired_price else "—"
+        i_is_buy = (i_cond == "below")
+        i_dir_icon = "📉" if i_cond == "above" else ("📈" if i_cond == "below" else "⚡")
+        i_zone_label = "ناحیه سل" if i_cond == "above" else ("ناحیه بای" if i_cond == "below" else "")
+        i_candle_cls = "candle-up" if i_is_buy else "candle-down"
+        rows_html += f"""
+        <div class="card card-active" data-kind="instant" data-search="{('فوری ' + i_sym + ' ' + i_tag + ' ' + i_creator).lower()}" data-falseby="" data-status="active">
+          <div class="card-num">⚡</div>
+          <div class="card-inner">
+          <div class="card-glow"></div>
+          <div class="card-header">
+            <div class="card-icon">{i_dir_icon}</div>
+            <div class="card-title">
+              <span class="tag">{i_tag}</span>
+              <span class="sym">{i_sym}{(' • ' + i_zone_label) if i_zone_label else ''}</span>
+            </div>
+            <span class="badge badge-active">⚡ فوری</span>
+          </div>
+          <div class="card-target">
+            <span class="target-lbl">💰 قیمت فایر</span>
+            <span class="target-val">{i_target}</span>
+          </div>
+          <div class="card-body">
+            <div class="info-grid">
+              <div class="info-cell"><span class="lbl">📅 ثبت</span><span class="val">{i_created}</span></div>
+              <div class="info-cell"><span class="lbl">⏰ فایر</span><span class="val">{i_fired}</span></div>
+              <div class="info-cell"><span class="lbl">👤 سازنده</span><span class="val">{i_creator}</span></div>
+              <div class="info-cell"><span class="lbl">🙋 مسئول</span><span class="val highlight">⚡ broadcast فوری</span></div>
+            </div>
+          </div>
+          <div class="card-rail">
+            <div class="rail-dot {i_candle_cls}"></div>
+            <div class="mini-candles">
+              <span class="mc {i_candle_cls}" style="height:40%"></span>
+              <span class="mc {i_candle_cls}" style="height:65%"></span>
+              <span class="mc {i_candle_cls}" style="height:30%"></span>
+              <span class="mc {i_candle_cls}" style="height:85%"></span>
+              <span class="mc {i_candle_cls}" style="height:50%"></span>
+            </div>
+            <span class="rail-label">{i_zone_label}</span>
           </div>
           </div>
         </div>"""
@@ -6727,7 +6795,11 @@ def report_weekly_html():
 <div class="search-wrap">
   <input type="text" id="searchBox" class="search-input" placeholder="🔍 جستجو بر اساس مسئول، نماد، تگ یا سازنده..." oninput="filterCards()">
   <select id="filterSelect" class="search-select" onchange="filterCards()">
-    <option value="">📂 همه آلارم‌ها</option>
+    <option value="">📂 همه آلارم‌ها (بدون فوری)</option>
+    <optgroup label="نوع">
+      <option value="kind:instant">⚡ فقط آلارم فوری</option>
+      <option value="kind:all">📊 همه (معمولی + فوری)</option>
+    </optgroup>
     <optgroup label="وضعیت">
       <option value="status:active">✅ فقط فعال</option>
       <option value="status:false">❌ فقط False شده</option>
@@ -6739,7 +6811,7 @@ def report_weekly_html():
   <span class="search-count" id="searchCount"></span>
 </div>
 <div class="list" id="cardList">
-  {'<div class="empty"><div class="icon">📭</div>آلارمی ثبت نشده</div>' if not rows else rows_html}
+  {'<div class="empty"><div class="icon">📭</div>آلارمی ثبت نشده</div>' if not rows and not instant_rows else rows_html}
   <div class="empty" id="noResults" style="display:none"><div class="icon">🔍</div>چیزی پیدا نشد</div>
 </div>
 {pagination_html}
@@ -6826,13 +6898,19 @@ def report_weekly_html():
     const cards = document.querySelectorAll('#cardList .card');
     let visible = 0;
     cards.forEach(c => {{
+      const kind = c.dataset.kind || 'regular';
       let match = !q || (c.dataset.search || '').includes(q);
-      if (match && sel) {{
-        if (sel.startsWith('status:')) {{
-          match = c.dataset.status === sel.slice(7);
-        }} else if (sel.startsWith('by:')) {{
-          match = c.dataset.falseby === sel.slice(3);
-        }}
+      if (sel === 'kind:instant') {{
+        match = match && (kind === 'instant');
+      }} else if (sel === 'kind:all') {{
+        // هر دو نوع مجازن، فیلترهای دیگه (status/by) فقط رو معمولی‌ها معنی دارن
+      }} else if (sel.startsWith('status:')) {{
+        match = match && (kind === 'regular') && (c.dataset.status === sel.slice(7));
+      }} else if (sel.startsWith('by:')) {{
+        match = match && (kind === 'regular') && (c.dataset.falseby === sel.slice(3));
+      }} else {{
+        // پیش‌فرض (بدون هیچ فیلتری) — فوری‌ها نشون داده نشن
+        match = match && (kind === 'regular');
       }}
       c.style.display = match ? '' : 'none';
       if (match) visible++;
@@ -6855,6 +6933,7 @@ def report_weekly_html():
       document.getElementById('themeToggle').textContent = saved === 'dark' ? '🌙' : '☀️';
     }}
   }} catch(e) {{}}
+  filterCards();
 </script>
 </body></html>"""
     return html, 200, {"Content-Type": "text/html; charset=utf-8"}
@@ -6943,6 +7022,7 @@ def report_export_html():
       <label class="chk-row"><input type="checkbox" value="false" class="statusChk"> ❌ False شده</label>
       <label class="chk-row"><input type="checkbox" value="expired" class="statusChk"> ⌛ منقضی‌شده</label>
       <label class="chk-row"><input type="checkbox" value="active" class="statusChk"> 🟢 فعال</label>
+      <label class="chk-row"><input type="checkbox" value="instant" class="statusChk"> ⚡ فوری</label>
     </div>
   </div>
 
@@ -7061,6 +7141,9 @@ def report_export_xlsx():
     want_false = want_all or "false" in statuses
     want_expired = want_all or "expired" in statuses
     want_active = want_all or "active" in statuses
+    # آلارم فوری برخلاف بقیه، پیش‌فرض (want_all) جزوش نیست — فقط با تیک صریح میاد،
+    # چون از چرخه‌ی تخصیص/alarm_assignments رد نمی‌شه و می‌خوایم بشه مجزا دانلودش کرد.
+    want_instant = "instant" in statuses
 
     if not SUPABASE_KEY:
         return jsonify({"ok": False, "error": "Supabase تنظیم نشده"}), 500
@@ -7177,6 +7260,24 @@ def report_export_xlsx():
                 if str(x.get("id","")) not in existing_ids:
                     x["_legacy"] = True
                     rows.append(x)
+
+        # آلارم فوری اصلاً وارد alarm_assignments نمیشه (چون تخصیص/رند-روبین نداره) —
+        # مستقیم از خود alerts با فیلتر instant=true میاریمش، فقط وقتی صریحاً خواسته شده.
+        if want_instant:
+            ui = (f"{SUPABASE_URL}/rest/v1/alerts"
+                  f"?fired_at=gte.{range_start_str}&fired_at=lt.{range_end_str}"
+                  f"&instant=eq.true&select=*&limit=5000")
+            if creators:
+                ui += f"&created_by=in.({','.join(creators)})"
+            if symbols:
+                ui += f"&symbol=in.({','.join(symbols)})"
+            r_inst = requests.get(ui, headers=_sb_h(), timeout=15)
+            instant_rows = r_inst.json() if r_inst.status_code == 200 else []
+            existing_ids2 = {str(x.get("id","")) for x in rows}
+            for x in instant_rows:
+                if str(x.get("id","")) not in existing_ids2:
+                    x["_instant"] = True
+                    rows.append(x)
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -7187,7 +7288,11 @@ def report_export_xlsx():
     for a in rows:
         st = a.get("status", "")
         asg = assignments_map.get(str(a.get("id","")), {})
-        if a.get("_legacy") and st == "fired":
+        if a.get("_instant"):
+            # آلارم فوری — مسئول/تخصیص نداره، همیشه با همین برچسب مجزا
+            if want_instant:
+                final_rows.append((a, {}, "⚡ فوری"))
+        elif a.get("_legacy") and st == "fired":
             # آلارم قدیمی از قبل سیستم مسئول — مفهوم مسئول/False براش وجود نداره
             if want_fired or want_false or want_all:
                 final_rows.append((a, {}, "فایرشده (قدیمی)"))
