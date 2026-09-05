@@ -248,6 +248,18 @@
       <div id="assignmentsList"><div class="empty-hint">در حال بارگذاری...</div></div>
     </div>
 
+    <div class="section-label">در دسترس بودن مسئولین</div>
+    <div class="card">
+      <div class="card-icon-row">
+        <div>
+          <div class="card-title">مرخصی / موقتاً کنار کشیدن</div>
+          <div class="card-desc" style="margin-bottom:0">اگه کسی موقتاً نیست (مرخصی، مسافرت و...)، خاموشش کن تا آلارم جدید بهش تخصیص داده نشه. آلارم‌هایی که از قبل بهش تخصیص داشته دست‌نخورده می‌مونه؛ فقط دیگه آلارم تازه نمی‌گیره.</div>
+        </div>
+        <div class="card-icon">🏖️</div>
+      </div>
+      <div class="user-list" id="teamAvailabilityList"><div class="empty-hint">در حال بارگذاری...</div></div>
+    </div>
+
     <div class="section-label">لیست کاربران</div>
     <div class="card">
       <div class="card-icon-row">
@@ -367,6 +379,7 @@
     loadUsers();
     loadDeprioritize();
     loadMutedSenders();
+    loadTeamAvailability();
   }
 
   function logout(){
@@ -524,6 +537,48 @@
     } catch(e){
       document.getElementById('deprioritizeDesc').textContent = 'خطا در بارگذاری: ' + e.message;
     }
+  }
+
+  async function loadTeamAvailability(){
+    try{
+      const data = await apiCall('/api/admin-panel/team-availability');
+      if (!data.ok) throw new Error(data.error);
+      renderTeamAvailability(data.members || []);
+    } catch(e){
+      document.getElementById('teamAvailabilityList').innerHTML = '<div class="empty-hint">خطا در بارگذاری: '+e.message+'</div>';
+    }
+  }
+
+  function renderTeamAvailability(members){
+    const box = document.getElementById('teamAvailabilityList');
+    if (!members.length){
+      box.innerHTML = '<div class="empty-hint">عضوی پیدا نشد</div>';
+      return;
+    }
+    box.innerHTML = members.map(m => `
+      <div class="toggle-row" style="margin-bottom:8px">
+        <div class="toggle-info">
+          <div class="t-name">${m.name}</div>
+          <div class="t-desc">${m.available ? 'در دسترس — آلارم جدید می‌گیره' : 'موقتاً کنار کشیده شده — آلارم جدید نمی‌گیره'}</div>
+        </div>
+        <div class="switch ${m.available ? 'on' : ''}" onclick="toggleMemberAvailability('${m.name}', ${m.available})"></div>
+      </div>
+    `).join('');
+  }
+
+  async function toggleMemberAvailability(name, currentlyAvailable){
+    const newValue = !currentlyAvailable;
+    try{
+      const data = await apiCall('/api/admin-panel/team-availability', {
+        method: 'POST', body: JSON.stringify({name, available: newValue})
+      });
+      if (data.ok){
+        pulseToast(newValue ? name+' دوباره در دسترسه' : name+' موقتاً کنار کشیده شد');
+        loadTeamAvailability();
+      } else {
+        pulseToast(data.error || 'خطا', true);
+      }
+    } catch(e){ pulseToast(e.message, true); }
   }
 
   async function loadMutedSenders(){
