@@ -66,16 +66,6 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .day-summary-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .day-summary-title{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
 .day-summary-time{font-size:10.5px;font-family:var(--mono);color:var(--text3)}
-.ds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
-@media(max-width:640px){.ds-grid{grid-template-columns:1fr 1fr}}
-.ds-cell{background:var(--bg1,rgba(0,0,0,.15));border:1px solid var(--border);border-radius:10px;padding:9px 10px;text-align:center}
-.ds-cell .n{font-size:19px;font-weight:800;font-family:var(--mono);line-height:1.1}
-.ds-cell .l{font-size:10px;color:var(--text3);margin-top:4px}
-.ds-cell.c-green .n{color:var(--green)}
-.ds-cell.c-red .n{color:#ff5d6c}
-.ds-cell.c-blue .n{color:#00e5ff}
-.ds-cell.c-gold .n{color:var(--gold)}
-.ds-people{font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ds-news{display:flex;align-items:center;gap:8px;background:rgba(240,90,0,.08);border:1px solid rgba(240,120,0,.25);border-radius:10px;padding:8px 12px;font-size:11.5px}
 .ds-news .icon{font-size:14px}
 .ds-news .txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -566,27 +556,8 @@ select option{background:var(--bg3)}
 
   <div class="day-summary" id="daySummary">
     <div class="day-summary-head">
-      <span class="day-summary-title">📋 خلاصه‌ی امروز</span>
+      <span class="day-summary-title">📰 اخبار مهم امروز</span>
       <span class="day-summary-time" id="ds-time">—</span>
-    </div>
-    <div class="ds-grid">
-      <div class="ds-cell c-green">
-        <div class="n" id="ds-active">—</div>
-        <div class="l">فعال امروز</div>
-        <div class="ds-people" id="ds-active-people"></div>
-      </div>
-      <div class="ds-cell c-red">
-        <div class="n" id="ds-false">—</div>
-        <div class="l">False امروز</div>
-      </div>
-      <div class="ds-cell c-blue">
-        <div class="n" id="ds-fired">—</div>
-        <div class="l">فایر امروز</div>
-      </div>
-      <div class="ds-cell c-gold">
-        <div class="n" id="ds-fired-week">—</div>
-        <div class="l">فایر این هفته</div>
-      </div>
     </div>
     <div class="ds-news" id="ds-news">
       <span class="icon">⏳</span>
@@ -827,15 +798,6 @@ async function loadDaySummary() {
     if (!d.ok) return;
 
     document.getElementById('ds-time').textContent = 'بروزرسانی: ' + d.generated_at;
-    document.getElementById('ds-active').textContent = d.active_today.total;
-    document.getElementById('ds-false').textContent = d.false_today;
-    document.getElementById('ds-fired').textContent = d.fired_today;
-    document.getElementById('ds-fired-week').textContent = d.fired_week;
-
-    const people = Object.entries(d.active_today.by_person || {});
-    document.getElementById('ds-active-people').textContent = people.length
-      ? people.map(([n, c]) => `${n}(${c})`).join(' · ')
-      : '';
 
     const newsBox = document.getElementById('ds-news');
     if (d.next_news) {

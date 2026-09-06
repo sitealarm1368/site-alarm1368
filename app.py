@@ -6217,66 +6217,24 @@ def api_gold_alarms():
         "fired_at": a.get("fired_at"),
         "fired_price": a.get("fired_price"),
         "instant": bool(a.get("instant")),
-        "instant": not bool(a.get("target_price")),
     } for a in rows]
 
     return jsonify({"ok": True, "items": out, "total": total, "page": page, "pages": pages})
 
 _home_summary_cache = {"data": None, "ts": 0}
 _home_summary_lock = threading.Lock()
-HOME_SUMMARY_CACHE_TTL = 90  # ثانیه — چند نفر همزمان صفحه رو باز کنن، فقط یه‌بار از Supabase می‌خونه
-
-def _sb_count_only(table, query):
-    """کوئری فقط-تعداد (بدون کشیدن ردیف‌های واقعی) — سبک‌ترین حالت ممکن برای Egress"""
-    if not SUPABASE_KEY:
-        return 0
-    try:
-        r = requests.get(
-            f"{SUPABASE_URL}/rest/v1/{table}?{query}&select=id",
-            headers={**_sb_h(), "Prefer": "count=exact", "Range": "0-0"}, timeout=8)
-        cr = r.headers.get("content-range", "")
-        if "/" in cr:
-            return int(cr.split("/")[-1])
-    except Exception as e:
-        print(f"[home-summary] count error ({table}): {e}")
-    return 0
+HOME_SUMMARY_CACHE_TTL = 90  # ثانیه — چند نفر همزمان صفحه رو باز کنن، فقط یه‌بار حساب می‌شه
 
 
 @app.route("/api/home-summary")
 def api_home_summary():
-    """خلاصه‌ی وضعیت امروز برای بالای صفحه‌ی اصلی — با کش کوتاه تا زیاد به Supabase فشار نیاره"""
+    """خلاصه‌ی اخبار امروز برای بالای صفحه‌ی اصلی — هیچ کوئری‌ای به Supabase نمی‌زنه،
+    فقط از لیست اخباری که هر روز صبح یه‌بار خونده می‌شه استفاده می‌کنه."""
     with _home_summary_lock:
         if _home_summary_cache["data"] is not None and (time.time() - _home_summary_cache["ts"]) < HOME_SUMMARY_CACHE_TTL:
             return jsonify(_home_summary_cache["data"])
 
     now = datetime.now(TEHRAN)
-    today_start = now.strftime("%Y-%m-%d 00:00:00")
-    days_since_saturday = (now.weekday() - 5) % 7
-    week_start = (now - timedelta(days=days_since_saturday)).replace(hour=0, minute=0, second=0, microsecond=0)
-    week_start_str = week_start.strftime("%Y-%m-%d %H:%M:%S")
-
-    # آلارم‌های فعالِ امروز + مسئولشون (دیتای کمی هست، فقط همون فیلد لازم می‌کشیم)
-    by_person = {}
-    active_total = 0
-    if SUPABASE_KEY:
-        try:
-            r = requests.get(
-                f"{SUPABASE_URL}/rest/v1/alarm_assignments"
-                f"?is_active=eq.true&created_at=gte.{today_start}&select=assigned_to",
-                headers=_sb_h(), timeout=8)
-            if r.status_code == 200:
-                for row in r.json():
-                    name = row.get("assigned_to") or "نامشخص"
-                    by_person[name] = by_person.get(name, 0) + 1
-                active_total = sum(by_person.values())
-        except Exception as e:
-            print(f"[home-summary] active fetch error: {e}")
-
-    false_today = _sb_count_only("alerts", f"false_at=gte.{today_start}")
-    fired_today = _sb_count_only("alerts", f"fired_at=gte.{today_start}")
-    fired_week = _sb_count_only("alerts", f"fired_at=gte.{week_start_str}")
-
-    # اخبار — از همون لیست تو حافظه (بدون هیچ فچ جدید، چون هر روز صبح یه‌بار خونده می‌شه)
     today_news = []
     next_news = None
     try:
@@ -6295,10 +6253,6 @@ def api_home_summary():
 
     data = {
         "ok": True,
-        "active_today": {"total": active_total, "by_person": by_person},
-        "false_today": false_today,
-        "fired_today": fired_today,
-        "fired_week": fired_week,
         "next_news": next_news,
         "today_news": today_news,
         "generated_at": now.strftime("%H:%M"),
