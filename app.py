@@ -6419,6 +6419,7 @@ def report_weekly_html():
         tgt_raw   = alert.get("target_price",0) or row.get("target_price",0) or 0
         target    = fmt_price(float(tgt_raw), sym) if tgt_raw else "—"
         creator   = alert.get("created_by","") or row.get("created_by","") or "—"
+        alarm_comment = alert.get("comment","") or ""
         created   = str(alert.get("created_at",""))[:16]
         status_cls = "active" if is_active else "false"
         status_txt = "فعال" if is_active else f"False — {false_by}"
@@ -6472,6 +6473,7 @@ def report_weekly_html():
             </div>
             {false_detail}
             {false_action}
+            {'<div class="false-detail" style="margin-top:8px"><span>💬 ' + alarm_comment + '</span></div>' if alarm_comment else ''}
           </div>
           <div class="card-rail">
             <div class="rail-dot {candle_cls}"></div>
@@ -6492,6 +6494,7 @@ def report_weekly_html():
         i_sym = a.get("symbol","") or ""
         i_cond = a.get("condition","") or ""
         i_creator = a.get("created_by","") or "—"
+        i_comment = a.get("comment","") or ""
         i_fired = str(a.get("fired_at",""))[:16]
         i_created = str(a.get("created_at",""))[:16]
         i_tag = a.get("tag","—") or "—"
@@ -6525,6 +6528,7 @@ def report_weekly_html():
               <div class="info-cell"><span class="lbl">👤 سازنده</span><span class="val">{i_creator}</span></div>
               <div class="info-cell"><span class="lbl">🙋 مسئول</span><span class="val highlight">⚡ broadcast فوری</span></div>
             </div>
+            {'<div class="false-detail" style="margin-top:8px"><span>💬 ' + i_comment + '</span></div>' if i_comment else ''}
           </div>
           <div class="card-rail">
             <div class="rail-dot {i_candle_cls}"></div>
