@@ -82,6 +82,7 @@ def _sb_upsert_alert(a):
             "last_checked": a.get("last_checked"),
             "fired_at":     a.get("fired_at"),
             "fired_price":  float(a["fired_price"]) if a.get("fired_price") is not None else None,
+            "instant":      bool(a.get("instant", False)),
         }
         # فیلدهای اختیاری — فقط اگه توی جدول وجود داشت اضافه میشن
         if a.get("tag"):
