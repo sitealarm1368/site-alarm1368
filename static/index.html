@@ -61,6 +61,28 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}}
+
+.day-summary{background:linear-gradient(160deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:1.1rem}
+.day-summary-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.day-summary-title{font-size:11px;font-family:var(--mono);color:var(--text3);letter-spacing:.1em;text-transform:uppercase}
+.day-summary-time{font-size:10.5px;font-family:var(--mono);color:var(--text3)}
+.ds-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:640px){.ds-grid{grid-template-columns:1fr 1fr}}
+.ds-cell{background:var(--bg1,rgba(0,0,0,.15));border:1px solid var(--border);border-radius:10px;padding:9px 10px;text-align:center}
+.ds-cell .n{font-size:19px;font-weight:800;font-family:var(--mono);line-height:1.1}
+.ds-cell .l{font-size:10px;color:var(--text3);margin-top:4px}
+.ds-cell.c-green .n{color:var(--green)}
+.ds-cell.c-red .n{color:#ff5d6c}
+.ds-cell.c-blue .n{color:#00e5ff}
+.ds-cell.c-gold .n{color:var(--gold)}
+.ds-people{font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ds-news{display:flex;align-items:center;gap:8px;background:rgba(240,90,0,.08);border:1px solid rgba(240,120,0,.25);border-radius:10px;padding:8px 12px;font-size:11.5px}
+.ds-news .icon{font-size:14px}
+.ds-news .txt{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-news .countdown{font-family:var(--mono);font-weight:700;color:#ffb020;white-space:nowrap}
+.ds-news.none{background:var(--bg1,rgba(0,0,0,.1));border-color:var(--border);color:var(--text3)}
+.ds-newslist{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.ds-newslist span{font-size:9.5px;font-family:var(--mono);background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px 7px;color:var(--text2)}
 .scard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:1rem 1.1rem .9rem}
 .scard-lbl{font-size:10px;font-family:var(--mono);color:var(--text3);letter-spacing:.09em;text-transform:uppercase;margin-bottom:8px}
 .scard-val{font-size:24px;font-weight:700;font-family:var(--mono);line-height:1;letter-spacing:-.02em}
@@ -542,6 +564,37 @@ select option{background:var(--bg3)}
     </div>
   </div>
 
+  <div class="day-summary" id="daySummary">
+    <div class="day-summary-head">
+      <span class="day-summary-title">📋 خلاصه‌ی امروز</span>
+      <span class="day-summary-time" id="ds-time">—</span>
+    </div>
+    <div class="ds-grid">
+      <div class="ds-cell c-green">
+        <div class="n" id="ds-active">—</div>
+        <div class="l">فعال امروز</div>
+        <div class="ds-people" id="ds-active-people"></div>
+      </div>
+      <div class="ds-cell c-red">
+        <div class="n" id="ds-false">—</div>
+        <div class="l">False امروز</div>
+      </div>
+      <div class="ds-cell c-blue">
+        <div class="n" id="ds-fired">—</div>
+        <div class="l">فایر امروز</div>
+      </div>
+      <div class="ds-cell c-gold">
+        <div class="n" id="ds-fired-week">—</div>
+        <div class="l">فایر این هفته</div>
+      </div>
+    </div>
+    <div class="ds-news" id="ds-news">
+      <span class="icon">⏳</span>
+      <span class="txt">در حال بررسی اخبار...</span>
+    </div>
+    <div class="ds-newslist" id="ds-newslist"></div>
+  </div>
+
   <div class="stats">
     <div class="scard"><div class="scard-lbl">آلارم فعال</div><div class="scard-val green" id="sc-alerts">0</div><div class="scard-sub" id="sc-alerts-sub">—</div></div>
     <div class="scard"><div class="scard-lbl">سیگنال</div><div class="scard-val" style="color:#00e5ff" id="sc-signals">0</div><div class="scard-sub">صادرشده</div></div>
@@ -766,6 +819,45 @@ const API = '';
 function initTheme() { const t = localStorage.getItem('pa_theme') || 'dark'; applyTheme(t); }
 function applyTheme(t) { document.body.classList.toggle('light', t === 'light'); document.getElementById('theme-toggle').textContent = t === 'light' ? '☀️' : '🌙'; }
 function toggleTheme() { const isLight = document.body.classList.contains('light'); const next = isLight ? 'dark' : 'light'; localStorage.setItem('pa_theme', next); applyTheme(next); }
+
+async function loadDaySummary() {
+  try {
+    const res = await fetch('/api/home-summary');
+    const d = await res.json();
+    if (!d.ok) return;
+
+    document.getElementById('ds-time').textContent = 'بروزرسانی: ' + d.generated_at;
+    document.getElementById('ds-active').textContent = d.active_today.total;
+    document.getElementById('ds-false').textContent = d.false_today;
+    document.getElementById('ds-fired').textContent = d.fired_today;
+    document.getElementById('ds-fired-week').textContent = d.fired_week;
+
+    const people = Object.entries(d.active_today.by_person || {});
+    document.getElementById('ds-active-people').textContent = people.length
+      ? people.map(([n, c]) => `${n}(${c})`).join(' · ')
+      : '';
+
+    const newsBox = document.getElementById('ds-news');
+    if (d.next_news) {
+      const h = Math.floor(d.next_news.minutes_left / 60);
+      const m = d.next_news.minutes_left % 60;
+      const left = h > 0 ? `${h} ساعت و ${m} دقیقه` : `${m} دقیقه`;
+      newsBox.classList.remove('none');
+      newsBox.innerHTML = `<span class="icon">🔴</span><span class="txt">${d.next_news.title} (${d.next_news.time})</span><span class="countdown">${left} مانده</span>`;
+    } else if (d.today_news && d.today_news.length) {
+      newsBox.classList.add('none');
+      newsBox.innerHTML = `<span class="icon">✅</span><span class="txt">اخبار مهم امروز تموم شد</span>`;
+    } else {
+      newsBox.classList.add('none');
+      newsBox.innerHTML = `<span class="icon">🟢</span><span class="txt">امروز خبر قرمز دلاری‌ای ثبت نشده</span>`;
+    }
+
+    const listEl = document.getElementById('ds-newslist');
+    listEl.innerHTML = (d.today_news || []).map(n => `<span>${n.time} · ${n.title}</span>`).join('');
+  } catch (e) { /* بی‌صدا — این بخش نباید بقیه‌ی صفحه رو خراب کنه */ }
+}
+loadDaySummary();
+setInterval(loadDaySummary, 90000); // هر ۹۰ ثانیه، هماهنگ با کش سمت سرور
 
 function toggleMoreMenu(e) {
   e.stopPropagation();
