@@ -72,6 +72,7 @@ body{background:radial-gradient(ellipse 1200px 500px at 15% -10%,rgba(232,179,64
 
   <div id="chartSection">
     <div class="tf-btns" id="tfBtns">
+      <button data-i="1m" onclick="setChartInterval(this,'1m')">M1</button>
       <button data-i="5m" onclick="setChartInterval(this,'5m')">M5</button>
       <button data-i="15m" class="active" onclick="setChartInterval(this,'15m')">M15</button>
       <button data-i="1h" onclick="setChartInterval(this,'1h')">H1</button>
@@ -105,6 +106,8 @@ let currentPage = 1;
 let chartOpen = false;
 let chartInited = false;
 let chart, series, priceLines = [], candleBars = [];
+let fireSegments = [];
+const INTERVAL_SECONDS = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600 };
 let currentInterval = '15m';
 
 function switchTab(status) {
@@ -199,6 +202,8 @@ function updateChartOverlay(items) {
 
   if (currentStatus === 'active') {
     series.setMarkers([]); // اگه قبلاً تو تب فایرشده مارکر گذاشته بودیم، پاک کن
+    fireSegments.forEach(s => chart.removeSeries(s));
+    fireSegments = [];
     items.forEach(a => {
       if (!a.target_price) return;
       const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
@@ -210,7 +215,10 @@ function updateChartOverlay(items) {
       priceLines.push(pl);
     });
   } else {
-    if (!items.length || !candleBars.length) { series.setMarkers([]); return; }
+    if (!items.length || !candleBars.length) { series.setMarkers([]); fireSegments.forEach(s => chart.removeSeries(s)); fireSegments = []; return; }
+    fireSegments.forEach(s => chart.removeSeries(s));
+    fireSegments = [];
+    const halfBar = (INTERVAL_SECONDS[currentInterval] || 900) / 2;
     const markers = [];
     items.forEach(a => {
       if (!a.fired_price || !a.fired_at) return;
@@ -230,6 +238,16 @@ function updateChartOverlay(items) {
         color, shape,
         text: `${prefix} ${a.created_by} (${a.fired_price})`,
       });
+      // یه خط کوچک دقیقاً روی قیمت فایرشده، فقط عرض همون یه کندل — برای نشون دادن دقیق نقطه‌ی فایر
+      const seg = chart.addLineSeries({
+        color, lineWidth: 3, priceLineVisible: false, lastValueVisible: false,
+        crosshairMarkerVisible: false, lineStyle: LightweightCharts.LineStyle.Solid,
+      });
+      seg.setData([
+        { time: nearest.time - halfBar, value: a.fired_price },
+        { time: nearest.time + halfBar, value: a.fired_price },
+      ]);
+      fireSegments.push(seg);
     });
     markers.sort((a, b) => a.time - b.time);
     series.setMarkers(markers);
