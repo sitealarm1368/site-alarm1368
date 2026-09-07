@@ -143,6 +143,35 @@ def _sb_upsert_config(tg, users, errors):
     except Exception as e:
         print(f"[alerts] config save error: {e}")
 
+def _sb_load_gold_bot_subscribers() -> list:
+    """chat_id هایی که رو ربات جدید طلا /start زدن"""
+    if not SUPABASE_KEY:
+        return []
+    try:
+        r = requests.get(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__&select=gold_bot_subscribers",
+            headers=_sb_h(), timeout=8)
+        if r.status_code == 200:
+            rows = r.json()
+            if rows and rows[0].get("gold_bot_subscribers") is not None:
+                val = rows[0]["gold_bot_subscribers"]
+                return val if isinstance(val, list) else json.loads(val)
+    except Exception as e:
+        print(f"[goldbot] load subscribers exc: {e}")
+    return []
+
+def _sb_save_gold_bot_subscribers(ids: list):
+    if not SUPABASE_KEY:
+        return
+    try:
+        requests.patch(
+            f"{SUPABASE_URL}/rest/v1/alerts?id=eq.__config__",
+            headers={**_sb_h(), "Prefer": "return=minimal"},
+            json={"gold_bot_subscribers": ids}, timeout=8)
+    except Exception as e:
+        print(f"[goldbot] save subscribers exc: {e}")
+
+
 def _sb_load_muted_instant_senders() -> list:
     """اسم‌هایی که آلارم فوریشون ذخیره میشه ولی به تلگرام ارسال نمیشه — پیش‌فرض لیست خالی"""
     if not SUPABASE_KEY:
@@ -476,6 +505,7 @@ def _local_mark_fired_backup(a):
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://erwimqqskkzcsayvhxot.supabase.co")
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "").rstrip("/")
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+GOLD_BOT_TOKEN = os.environ.get("GOLD_BOT_TOKEN", "")  # ربات جدا و مخصوص طلا (تستی)
 
 def _sb_h():
     return {
@@ -1141,7 +1171,7 @@ def _sb_restore_on_startup():
     تا تقسیم رندومِ عادلانه بدون از دست دادن state ادامه پیدا کنه.
     دیگه هیچ شیفت/handover/scheduler‌ای وجود نداره.
     """
-    global _deprioritize_masoud_active, _unavailable_members, _muted_instant_senders
+    global _deprioritize_masoud_active, _unavailable_members, _muted_instant_senders, _gold_bot_subscribers
     rows = _sb_load_active_assignments()
     _rebuild_active_assign_count(rows)
     _rebuild_daily_assign_count()
@@ -1151,10 +1181,13 @@ def _sb_restore_on_startup():
         _unavailable_members = set(_sb_load_unavailable_members())
     with _muted_instant_lock:
         _muted_instant_senders = set(n.lower() for n in _sb_load_muted_instant_senders())
+    with _gold_bot_lock:
+        _gold_bot_subscribers = set(str(x) for x in _sb_load_gold_bot_subscribers())
     print(f"[assign] startup: {len(rows)} آلارم active از Supabase بازسازی شد — "
           f"اولویت پایین مسعود: {'فعال' if _deprioritize_masoud_active else 'غیرفعال'} — "
           f"غیرفعال‌ها: {sorted(_unavailable_members) or 'هیچ‌کس'} — "
-          f"آلارم فوری بی‌صدا: {sorted(_muted_instant_senders) or 'هیچ‌کس'}")
+          f"آلارم فوری بی‌صدا: {sorted(_muted_instant_senders) or 'هیچ‌کس'} — "
+          f"مشترکین ربات طلا: {len(_gold_bot_subscribers)}")
 
 
 
@@ -3831,6 +3864,8 @@ def _do_update(upd, token):
                         def _bg_sos(tok=token_cbq, tgts=targets_sc, msg=out_sc, s=sym_sc, aid=sos_aid,
                                     atag=alarm_num_tag_sc, sndr=sender_sc, cond=condition_sc, atp=atype_sc, cur=cur_sc):
                             sos_cid_to_mid = {}
+                            if "XAU" in s.upper():
+                                _broadcast_to_gold_bot(msg)
                             if s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sndr):
                                 for tc_sc in tgts:
                                     kb_sc = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc_sc}:{s}"}]]
@@ -4674,6 +4709,8 @@ def _do_update(upd, token):
                                 + (f"💬 {comment_s}\n" if comment_s else "")
                                 + f"⏰ {now_pretty()} (تهران)", [])
                         # broadcast به بقیه
+                        if "XAU" in sym_s.upper():
+                            _broadcast_to_gold_bot(out_s)
                         if sym_s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_s):
                             for tc2 in targets2:
                                 kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
@@ -4807,6 +4844,8 @@ def _do_update(upd, token):
                         targets = all_cids if BROADCAST_MODE else [YOUR_CHAT_ID]
                         sos_aid_txt = f"sos_{sym}_{int(time.time())}"
                         sos_cid_to_mid_txt = {}
+                        if "XAU" in sym.upper():
+                            _broadcast_to_gold_bot(out_msg)
                         if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_name):
                             for tc in targets:
                                 mid_sos_txt = send_tg_keyboard(token, tc, out_msg,
@@ -5203,6 +5242,20 @@ def check_alerts():
                     # 🔒 فوری و سینک قبل از هرکاری (ارسال پیام/تعیین مسئول) تو Supabase ذخیره می‌کنیم —
                     # تا اگه سرور وسط ارسال پیام‌ها کرش/ریستارت کرد، این آلارم already-fired بمونه و دوباره فایر نشه
                     save_alert_fired(a)
+                    if "XAU" in sym.upper():
+                        _gb_arrow = "📈 ناحیه سل" if cond == "above" else "📉 ناحیه بای"
+                        _gb_creator = a.get("created_by") or "سیستم"
+                        _gb_comment = a.get("comment", "")
+                        _gb_cmt = f"\n💬 {_gb_comment}" if _gb_comment else ""
+                        _gb_msg = (
+                            f"🚨 آلارم قیمت طلا فایر شد!\n\n"
+                            f"💰 {sym} — {_gb_arrow}\n"
+                            f"🎯 هدف: {fmt_price(tgt, sym)}\n"
+                            f"📊 قیمت فایر: {fmt_price(cur, sym)}\n"
+                            f"👤 {_gb_creator}"
+                            f"{_gb_cmt}\n\n⏰ {now_pretty()} (تهران)"
+                        )
+                        _broadcast_to_gold_bot(_gb_msg)
                     # ⏸️ موقت: آلارم طلا (XAUUSD) فایر می‌شه و ثبت می‌شه، فقط پیام تلگرام ارسال نشه
                     if sym.upper() in TEMP_MUTED_SYMBOLS:
                         print(f"[FILTER] {sym} در لیست موقت بی‌صدا — پیام تلگرام ارسال نشد")
@@ -5554,6 +5607,8 @@ def instant_alert():
 
     # هر کاربر جداگانه با دکمه هشدار دوره‌ای
     sent_count = 0
+    if "XAU" in sym.upper():
+        _broadcast_to_gold_bot(out_msg)
     if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(_creator):
         for cid in targets:
             kb = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{cid}:{sym}"}]]
@@ -6118,7 +6173,67 @@ def _restore_reminders():
 threading.Thread(target=_restore_reminders, daemon=True).start()
 threading.Thread(target=daily_news_scheduler, daemon=True).start()
 print(f"[STARTUP] thread daily_news_scheduler شروع شد — ارسال ساعت {FF_NEWS_HOUR:02d}:{FF_NEWS_MINUTE:02d} تهران")
+# ربات جدا و مخصوص طلا (تستی) — هرکی /start بزنه، مشترک می‌شه و همه‌ی آلارم‌های طلا رو می‌بینه
+_gold_bot_subscribers: set = set()
+_gold_bot_lock = threading.Lock()
+
+def _add_gold_bot_subscriber(chat_id: str):
+    global _gold_bot_subscribers
+    cid = str(chat_id)
+    with _gold_bot_lock:
+        if cid in _gold_bot_subscribers:
+            return False
+        _gold_bot_subscribers.add(cid)
+        snapshot = sorted(_gold_bot_subscribers)
+    _sb_save_gold_bot_subscribers(snapshot)
+    return True
+
+def _broadcast_to_gold_bot(text: str):
+    """این پیام رو مستقل از mute بودن ربات اصلی، به همه‌ی مشترکین ربات طلا می‌فرسته"""
+    if not GOLD_BOT_TOKEN:
+        return
+    with _gold_bot_lock:
+        subs = list(_gold_bot_subscribers)
+    for cid in subs:
+        try:
+            send_tg(GOLD_BOT_TOKEN, cid, text)
+        except Exception as e:
+            print(f"[goldbot] send error to {cid}: {e}")
+
+def poll_gold_bot():
+    """حلقه‌ی polling ساده‌ی ربات طلا — فقط /start رو مدیریت می‌کنه"""
+    if not GOLD_BOT_TOKEN:
+        print("[goldbot] GOLD_BOT_TOKEN تنظیم نشده — این ربات غیرفعاله")
+        return
+    last_id = 0
+    while True:
+        try:
+            r = requests.get(
+                f"https://api.telegram.org/bot{GOLD_BOT_TOKEN}/getUpdates",
+                params={"offset": last_id + 1, "timeout": 20, "limit": 100},
+                timeout=30, headers=H)
+            if r.status_code != 200:
+                time.sleep(10)
+                continue
+            for upd in r.json().get("result", []):
+                last_id = upd["update_id"]
+                msg = upd.get("message", {})
+                text = (msg.get("text") or "").strip()
+                cid = msg.get("chat", {}).get("id")
+                if cid is None:
+                    continue
+                if text == "/start":
+                    is_new = _add_gold_bot_subscriber(cid)
+                    welcome = ("🟡 <b>ربات آلارم طلا</b>\n\n"
+                               "از این به بعد هر آلارم طلا (فوری و معمولی) اینجا برات میاد.")
+                    send_tg(GOLD_BOT_TOKEN, cid, welcome if is_new else "✅ از قبل مشترک بودی، همچنان فعاله.")
+        except Exception as e:
+            print(f"[goldbot] poll error: {e}")
+        time.sleep(5)
+
+
 threading.Thread(target=poll_telegram, daemon=True).start()
+threading.Thread(target=poll_gold_bot, daemon=True).start()
 print("[STARTUP] thread poll_telegram شروع شد")
 
 # ── بازیابی fired_msgs و counters از Supabase بعد از restart ──
