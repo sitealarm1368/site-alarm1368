@@ -4907,6 +4907,16 @@ def _do_update(upd, token):
                             d["alerts"].append(new_alert)
                             _sb_upsert_alert(new_alert)
                             _cache_alerts = d
+                            if "XAU" in sym:
+                                _gb_arrow = "📈 ناحیه سل" if condition == "above" else "📉 ناحیه بای"
+                                _gb_cmt = f"\n💬 {comment}" if comment else ""
+                                _broadcast_to_gold_bot(
+                                    f"🆕 آلارم قیمت طلا ست شد\n\n"
+                                    f"💰 {sym} — {_gb_arrow}\n"
+                                    f"🎯 هدف: {fmt_price(tgt_f, sym)}\n"
+                                    f"👤 {sender_name}"
+                                    f"{_gb_cmt}\n\n⏰ {now_pretty()} (تهران)"
+                                )
                             _is_adm_alarm = (cid == YOUR_CHAT_ID)
                             confirm_alarm_txt = (
                                 f"✅ آلارم ثبت شد\n\n"
@@ -4967,6 +4977,16 @@ def _do_update(upd, token):
                                 d["alerts"].append(new_alert)
                                 _sb_upsert_alert(new_alert)
                                 _cache_alerts = d
+                                if "XAU" in sym:
+                                    _gb_arrow2 = "📈 ناحیه سل" if condition == "above" else "📉 ناحیه بای"
+                                    _gb_cmt2 = f"\n💬 {comment}" if comment else ""
+                                    _broadcast_to_gold_bot(
+                                        f"🆕 آلارم قیمت طلا (شخصی) ست شد\n\n"
+                                        f"💰 {sym} — {_gb_arrow2}\n"
+                                        f"🎯 هدف: {fmt_price(tgt_f, sym)}\n"
+                                        f"👤 {sender_name}"
+                                        f"{_gb_cmt2}\n\n⏰ {now_pretty()} (تهران)"
+                                    )
                                 _is_adm_me = (cid == YOUR_CHAT_ID)
                                 _me_dir = "📈 BUY" if condition == "below" else "📉 SELL"
                                 _me_confirm = (
@@ -5486,6 +5506,16 @@ def add_alert():
         data = load_alerts()
         data["alerts"].append(a)
         save_alerts(data)
+    if "XAU" in sym:
+        _gb_arrow3 = "📈 ناحیه سل" if a["condition"] == "above" else "📉 ناحیه بای"
+        _gb_cmt3 = f"\n💬 {a['comment']}" if a.get("comment") else ""
+        _broadcast_to_gold_bot(
+            f"🆕 آلارم قیمت طلا ست شد (از سایت)\n\n"
+            f"💰 {sym} — {_gb_arrow3}\n"
+            f"🎯 هدف: {fmt_price(tgt, sym)}\n"
+            f"👤 {a['created_by']}"
+            f"{_gb_cmt3}\n\n⏰ {now_pretty()} (تهران)"
+        )
     return jsonify({"ok": True, "alert": a})
 
 @app.route("/api/alarm-assignments/<aid>/false", methods=["POST"])
