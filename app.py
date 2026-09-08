@@ -4907,7 +4907,7 @@ def _do_update(upd, token):
                             d["alerts"].append(new_alert)
                             _sb_upsert_alert(new_alert)
                             _cache_alerts = d
-                            if "XAU" in sym:
+                            if "XAU" in sym.upper():
                                 _gb_arrow = "📈 ناحیه سل" if condition == "above" else "📉 ناحیه بای"
                                 _gb_cmt = f"\n💬 {comment}" if comment else ""
                                 _broadcast_to_gold_bot(
@@ -4977,7 +4977,7 @@ def _do_update(upd, token):
                                 d["alerts"].append(new_alert)
                                 _sb_upsert_alert(new_alert)
                                 _cache_alerts = d
-                                if "XAU" in sym:
+                                if "XAU" in sym.upper():
                                     _gb_arrow2 = "📈 ناحیه سل" if condition == "above" else "📉 ناحیه بای"
                                     _gb_cmt2 = f"\n💬 {comment}" if comment else ""
                                     _broadcast_to_gold_bot(
@@ -5506,7 +5506,7 @@ def add_alert():
         data = load_alerts()
         data["alerts"].append(a)
         save_alerts(data)
-    if "XAU" in sym:
+    if "XAU" in sym.upper():
         _gb_arrow3 = "📈 ناحیه سل" if a["condition"] == "above" else "📉 ناحیه بای"
         _gb_cmt3 = f"\n💬 {a['comment']}" if a.get("comment") else ""
         _broadcast_to_gold_bot(
