@@ -3775,6 +3775,16 @@ def _do_update(upd, token):
                         _sb_upsert_alert(new_alert_ae)
                         _cache_alerts = d_ae
                         del _pending_alarm[ae_cid]
+                        if "XAU" in sym_ae.upper():
+                            _gb_arrow_ae = "📈 ناحیه سل" if new_alert_ae["condition"] == "above" else "📉 ناحیه بای"
+                            _gb_cmt_ae = f"\n💬 {comment_ae}" if comment_ae else ""
+                            _broadcast_to_gold_bot(
+                                f"🆕 آلارم قیمت طلا ست شد\n\n"
+                                f"💰 {sym_ae} — {_gb_arrow_ae}\n"
+                                f"🎯 هدف: {fmt_price(new_alert_ae['target_price'], sym_ae)}\n"
+                                f"👤 {sender_ae}"
+                                f"{_gb_cmt_ae}\n\n⏰ {now_teh()} (تهران)"
+                            )
                         dir_lbl_ae = "📈 BUY" if new_alert_ae["condition"] == "below" else "📉 SELL"
                         priv_lbl_ae = "  🔒 شخصی" if is_private_ae else "  🌐 تیمی"
                         expiry_lbl_ae = f"\n⏳ اعتبار: {ae_days} روز (تا {expires_at_ae[:10]})" if expires_at_ae else "\n♾ بدون انقضا"
