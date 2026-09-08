@@ -3875,7 +3875,7 @@ def _do_update(upd, token):
                                     atag=alarm_num_tag_sc, sndr=sender_sc, cond=condition_sc, atp=atype_sc, cur=cur_sc):
                             sos_cid_to_mid = {}
                             if "XAU" in s.upper():
-                                _broadcast_to_gold_bot(msg)
+                                _broadcast_to_gold_bot(msg + f"\n📅 ثبت: {now_teh()}")
                             if s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sndr):
                                 for tc_sc in tgts:
                                     kb_sc = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc_sc}:{s}"}]]
@@ -4720,7 +4720,7 @@ def _do_update(upd, token):
                                 + f"⏰ {now_pretty()} (تهران)", [])
                         # broadcast به بقیه
                         if "XAU" in sym_s.upper():
-                            _broadcast_to_gold_bot(out_s)
+                            _broadcast_to_gold_bot(out_s + f"\n📅 ثبت: {now_teh()}")
                         if sym_s.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_s):
                             for tc2 in targets2:
                                 kb2 = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{tc2}:{sym_s}"}]]
@@ -4855,7 +4855,7 @@ def _do_update(upd, token):
                         sos_aid_txt = f"sos_{sym}_{int(time.time())}"
                         sos_cid_to_mid_txt = {}
                         if "XAU" in sym.upper():
-                            _broadcast_to_gold_bot(out_msg)
+                            _broadcast_to_gold_bot(out_msg + f"\n📅 ثبت: {now_teh()}")
                         if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(sender_name):
                             for tc in targets:
                                 mid_sos_txt = send_tg_keyboard(token, tc, out_msg,
@@ -5277,13 +5277,16 @@ def check_alerts():
                         _gb_creator = a.get("created_by") or "سیستم"
                         _gb_comment = a.get("comment", "")
                         _gb_cmt = f"\n💬 {_gb_comment}" if _gb_comment else ""
+                        _gb_created = a.get("created_at", "—")
                         _gb_msg = (
                             f"🚨 آلارم قیمت طلا فایر شد!\n\n"
                             f"💰 {sym} — {_gb_arrow}\n"
                             f"🎯 هدف: {fmt_price(tgt, sym)}\n"
                             f"📊 قیمت فایر: {fmt_price(cur, sym)}\n"
                             f"👤 {_gb_creator}"
-                            f"{_gb_cmt}\n\n⏰ {now_pretty()} (تهران)"
+                            f"{_gb_cmt}\n"
+                            f"📅 ثبت: {_gb_created}\n"
+                            f"⏰ فایر: {now_pretty()} (تهران)"
                         )
                         _broadcast_to_gold_bot(_gb_msg)
                     # ⏸️ موقت: آلارم طلا (XAUUSD) فایر می‌شه و ثبت می‌شه، فقط پیام تلگرام ارسال نشه
@@ -5648,7 +5651,7 @@ def instant_alert():
     # هر کاربر جداگانه با دکمه هشدار دوره‌ای
     sent_count = 0
     if "XAU" in sym.upper():
-        _broadcast_to_gold_bot(out_msg)
+        _broadcast_to_gold_bot(out_msg + f"\n📅 ثبت: {now_teh()}")
     if sym.upper() not in TEMP_MUTED_SYMBOLS and not _is_instant_sender_muted(_creator):
         for cid in targets:
             kb = [[{"text": "⏰ هشدار دوره‌ای", "callback_data": f"set_reminder:{cid}:{sym}"}]]

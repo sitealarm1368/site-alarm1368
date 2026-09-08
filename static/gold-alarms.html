@@ -204,6 +204,7 @@ function updateChartOverlay(items) {
     series.setMarkers([]); // اگه قبلاً تو تب فایرشده مارکر گذاشته بودیم، پاک کن
     fireSegments.forEach(s => chart.removeSeries(s));
     fireSegments = [];
+    const halfBarActive = (INTERVAL_SECONDS[currentInterval] || 900) * 1.4;
     items.forEach(a => {
       if (!a.target_price) return;
       const color = a.condition === 'above' ? '#F04060' : '#1FCE6B';
@@ -213,6 +214,26 @@ function updateChartOverlay(items) {
         axisLabelVisible: true, title: a.created_by,
       });
       priceLines.push(pl);
+
+      // یه تیک کوچیک و توپر دقیقاً روی کندلی که این آلارم ثبت شده — بدون نوشتن تاریخ رو چارت
+      if (a.created_at && candleBars.length) {
+        const createdTime = Math.floor(new Date(a.created_at).getTime() / 1000);
+        if (createdTime >= candleBars[0].time && createdTime <= candleBars[candleBars.length - 1].time) {
+          let nearestC = candleBars[0];
+          for (const b of candleBars) {
+            if (Math.abs(b.time - createdTime) < Math.abs(nearestC.time - createdTime)) nearestC = b;
+          }
+          const tick = chart.addLineSeries({
+            color, lineWidth: 5, priceLineVisible: false, lastValueVisible: false,
+            crosshairMarkerVisible: false, lineStyle: LightweightCharts.LineStyle.Solid,
+          });
+          tick.setData([
+            { time: nearestC.time - halfBarActive, value: a.target_price },
+            { time: nearestC.time + halfBarActive, value: a.target_price },
+          ]);
+          fireSegments.push(tick);
+        }
+      }
     });
   } else {
     if (!items.length || !candleBars.length) { series.setMarkers([]); fireSegments.forEach(s => chart.removeSeries(s)); fireSegments = []; return; }
